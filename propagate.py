@@ -1,5 +1,5 @@
 import json
-from enrichment import get_scores_df
+from propagation_diff import get_scores_df
 from random import sample
 from netprop.models.results_models import PropagationResultModel
 from pathlib import Path

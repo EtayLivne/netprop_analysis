@@ -1,5 +1,5 @@
 from netprop.models.results_models import PropagationResultModel
-from enrichment import get_crispr_rankings
+from propagation_diff import get_crispr_rankings
 import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt

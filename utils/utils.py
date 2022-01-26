@@ -10,3 +10,5 @@ def load_json(file_path):
 def dump_json(obj: dict, file_path: str):
     with open(file_path, 'w') as handler:
         json.dump(obj, handler, indent=4)
+
+

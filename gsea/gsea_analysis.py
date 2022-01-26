@@ -1,6 +1,6 @@
 from gsea.abstract_gsea import AbstractGSEAAnalysis
 from gsea.gsea_data import GSEAData
-from enrichment import get_scores_df
+from propagation_diff import get_scores_df
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool, Queue, Process, cpu_count

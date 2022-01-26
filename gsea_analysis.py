@@ -1,5 +1,5 @@
 from prepare_for_gsea import *
-from enrichment import get_crispr_rankings
+from propagation_diff import get_crispr_rankings
 import pandas as pd
 from scipy import stats
 from gsea.gsea_data import GSEAData

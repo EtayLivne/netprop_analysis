@@ -20,7 +20,7 @@ def merge_translations():
         json.dump(my_translations, handler, indent=4)
 
 
-def decmopose_concatanated_symbols():
+def decompose_concatanated_symbols():
     with open(r"D:\complete_translation.json", 'r') as handler:
         hgnc = json.load(handler)
     new_dict = dict()
@@ -38,4 +38,4 @@ def decmopose_concatanated_symbols():
 
 
 if __name__ == "__main__":
-    decmopose_concatanated_symbols()
+    decompose_concatanated_symbols()
