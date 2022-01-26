@@ -38,6 +38,13 @@ def assert_no_positive_diff(prop_file_list: str, reference_file: str):
     print(f"{len[bad_ids]} propagations has positive values")
 
 
+def scores_iter(ref_file: str, tested_files: list[str], sort=False):
+    for f in tested_files:
+        ref = PropagationResultModel.parse_file(ref_file)
+        test = PropagationResultModel.parse_file(f)
+        yield propagation_diff_df(ref, test, sort=sort)
+
+
 
 
 if __name__ == "__main__":

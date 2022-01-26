@@ -1,6 +1,6 @@
 from gsea.abstract_gsea import AbstractGSEAAnalysis
 from gsea.gsea_data import GSEAData
-from propagation_diff import get_scores_df
+from propagation_diff import scores_iter
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool, Queue, Process, cpu_count
@@ -31,7 +31,7 @@ def calc_enrichment(sorted_genes: pd.Series, pathway: set[str], ro=1):
 class GSEAAnalysis(AbstractGSEAAnalysis):
     def _analyze(self, data: GSEAData) -> dict:
         output = dict()
-        for prop_id, prop_series in get_scores_df(data.reference_propagation, data.propagation_files):
+        for prop_id, prop_series in scores_iter(data.reference_propagation, data.propagation_files):
             output[prop_id] = calc_enrichment(prop_series, data.target_pathway)
         return output
 
@@ -43,7 +43,7 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
 
     @staticmethod
     def _score_producing_worker(reference_file, tested_files: list[str], task_q: Queue):
-        for prop_id, prop_series in get_scores_df(reference_file, tested_files):
+        for prop_id, prop_series in scores_iter(reference_file, tested_files):
             task_q.put((prop_id, prop_series))
         sleep(60)
         task_q.put("HALT")

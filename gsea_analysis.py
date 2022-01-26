@@ -1,5 +1,5 @@
 from prepare_for_gsea import *
-from propagation_diff import get_crispr_rankings
+from crispr import get_crispr_rankings
 import pandas as pd
 from scipy import stats
 from gsea.gsea_data import GSEAData
@@ -13,10 +13,10 @@ def crispr_scores_for_spearman(cripsr_scores_path: str, translation_path: str)->
 
 
 
-def gsea_result_spearman():
-    scored_knockouts_path = r"D:\analysis_output.json"
-    crispr_scores_path = r"D:\data\other\crispr_screen.csv"
-    translation_path = r"D:\data\other\symbol_to_entrezgene.json"
+def gsea_result_spearman(scored_knockouts_path: str, crispr_scores_path: str, translation_path: str):
+    # scored_knockouts_path = r"D:\analysis_output.json"
+    # crispr_scores_path = r"D:\data\other\crispr_screen.csv"
+    # translation_path = r"D:\data\other\symbol_to_entrezgene.json"
     with open(scored_knockouts_path, 'r') as handler:
         gsea_data = json.load(handler)
     gsea_data = {k.split("_")[0]: v[0] for k, v in gsea_data.items()}
@@ -36,17 +36,19 @@ def gsea_result_spearman():
     return stats.spearmanr(gsea_input, crispr_input)
 
 
+def gsea_scores(ref_prop_file: str, histogram_file: str, props_root_folder: str, diff_exp_genes: str, outpath: str):
+    data = GSEAData()
+    data.reference_propagation =ref_prop_file
+    data.propagation_files_from_histogram(histogram_file, props_root_folder)
+    data.set_target_pathway_to_diff_exp_genes(diff_exp_genes)
+    analysis = GSEAAnalysis()
+    analysis.analyze(data, outpath)
 
 if __name__ == "__main__":
     # print(gsea_result_spearman())
 
 
-    data = GSEAData()
-    data.reference_propagation = r"D:\data\propagations\new_vanilla\merged_covid\no_knockouts.json"
-    data.propagation_files_from_histogram(r"D:\data\temp\histogram_new_data_new_format.json", r"D:\data\propagations\new_vanilla\merged_covid")
-    data.set_target_pathway_to_diff_exp_genes(r"D:\data\diff_genes\stukalov\diff_exp_unified_translated.json")
-    analysis = GSEAAnalysis()
-    analysis.analyze(data, r"D:\\analysis_output.json")
+    pass
 
 
 
