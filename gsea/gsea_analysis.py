@@ -1,13 +1,13 @@
 from gsea.abstract_gsea import AbstractGSEAAnalysis
 from gsea.gsea_data import GSEAData
-from propagation_diff import scores_iter
+from score_from_netprop import scores_iter
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool, Queue, Process, cpu_count
 from time import sleep
 
 
-def calc_enrichment(sorted_genes: pd.Series, pathway: set[str], ro=1):
+def gene_set_enrichment(sorted_genes: pd.Series, pathway: set[str], ro=1):
     len_genes, len_pathway = len(sorted_genes), len(pathway)
 
     ro_vec = ro ** np.arange(len_genes)
@@ -31,8 +31,8 @@ def calc_enrichment(sorted_genes: pd.Series, pathway: set[str], ro=1):
 class GSEAAnalysis(AbstractGSEAAnalysis):
     def _analyze(self, data: GSEAData) -> dict:
         output = dict()
-        for prop_id, prop_series in scores_iter(data.reference_propagation, data.propagation_files):
-            output[prop_id] = calc_enrichment(prop_series, data.target_pathway)
+        for prop_id, prop_series in scores_iter(data.reference_propagation, data.propagation_files, sort=True):
+            output[prop_id] = gene_set_enrichment(prop_series, data.target_pathway)
         return output
 
 
@@ -43,7 +43,7 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
 
     @staticmethod
     def _score_producing_worker(reference_file, tested_files: list[str], task_q: Queue):
-        for prop_id, prop_series in scores_iter(reference_file, tested_files):
+        for prop_id, prop_series in scores_iter(reference_file, tested_files, sort=True):
             task_q.put((prop_id, prop_series))
         sleep(60)
         task_q.put("HALT")
@@ -56,8 +56,7 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
             if task == "HALT":
                 break
             prop_id, prop_series = task
-            prop_series.sort_values(ascending=True, inplace=True)
-            out_q.put({prop_id: calc_enrichment(prop_series, diff_ex_genes)})
+            out_q.put({prop_id: gene_set_enrichment(prop_series, diff_ex_genes)})
             counter += 1
             if counter % 10 == 0:
                 print(f"look at me! printed {counter} in total!")

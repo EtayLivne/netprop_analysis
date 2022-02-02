@@ -1,14 +1,6 @@
 import json
-from propagation_diff import get_scores_df
-from random import sample
-from netprop.models.results_models import PropagationResultModel
-from pathlib import Path
-import matplotlib.pyplot as plt
-import pandas as pd
-import csv
+from netprop.propagation import propagate_from_config, NETWORK_ORDERING_KEYWORD
 from utils.new_file_loaders import CovToHumanStukalov
-from netprop.propagation.functions import propagate_from_config
-
 
 def histogram_to_json(path, outpath):
     with open(path, 'r') as handler:
@@ -24,6 +16,7 @@ def histogram_to_json(path, outpath):
 
 def main():
     # propagate_from_config(r"D:\configurations\temp.json")
-    histogram_to_json(r"D:\histogram_new_data.txt", r"D:\histogram_new_data.json")
+    # histogram_to_json(r"D:\histogram_new_data.txt", r"D:\histogram_new_data.json")
+    propagate_from_config(r"D:\configurations\p_value.json", ordering={NETWORK_ORDERING_KEYWORD: 1})
 if __name__ == "__main__":
     main()

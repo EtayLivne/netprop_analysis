@@ -40,7 +40,8 @@ def gsea_scores(ref_prop_file: str, histogram_file: str, props_root_folder: str,
     data = GSEAData()
     data.reference_propagation =ref_prop_file
     data.propagation_files_from_histogram(histogram_file, props_root_folder)
-    data.set_target_pathway_to_diff_exp_genes(diff_exp_genes)
+    # data.set_target_pathway_to_diff_exp_genes(diff_exp_genes)
+    data.set_target_pathway_to_top_prop_scores(ref_prop_file)
     analysis = GSEAAnalysis()
     analysis.analyze(data, outpath)
 

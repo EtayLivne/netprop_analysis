@@ -1,5 +1,6 @@
 from pathlib import Path
 from utils.utils import load_json, dump_json
+from netprop.models import PropagationResultModel
 
 def get_gsea_data(histogram_path: str, propagations_root_dir: str, diff_exp_genes_path: str, reference_propgation: str):
     data = GSEAData()
@@ -35,4 +36,8 @@ class GSEAData:
 
     def set_target_pathway_to_diff_exp_genes(self, diff_exp_genes_path: str):
         self.target_pathway = self._load_diff_exp_genes(diff_exp_genes_path)
+
+    def set_target_pathway_to_top_prop_scores(self, prop_file, k: int=100, liquid: str="info"):
+        self.target_pathway = set(sorted([n for n in PropagationResultModel.parse_file(prop_file).nodes],
+                                         key=lambda n: n.liquids[liquid], reverse=True)[:k])
 

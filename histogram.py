@@ -3,10 +3,12 @@ from multiprocessing import Queue
 from utils.utils import load_json, dump_json
 from pathlib import Path
 from multiprocessing import Pool, Queue, cpu_count
-from propagation_diff import propagation_diff_df
+from score_from_netprop import propagation_diff_to_df
+from scripts.merge_fluids import merge_all_liquids
 
 
-def produce_df(reference_file: str, task_q: Queue, output_q: Queue, message_q):
+def produce_df(reference_file: str, task_q: Queue, output_q: Queue, message_q,
+               merge_liquids: bool=False, liquid_name: str="info"):
     reference = PropagationResultModel.parse_file(reference_file)
     while True:
         task = task_q.get(block=True)
@@ -14,9 +16,12 @@ def produce_df(reference_file: str, task_q: Queue, output_q: Queue, message_q):
             break
         tested_propagation_path = task
         tested = PropagationResultModel.parse_file(tested_propagation_path)
-        output_q.put(propagation_diff_df(reference, tested))
+        if merge_liquids:
+            merge_all_liquids(tested)
+        output_q.put(propagation_diff_to_df(reference, tested, liquid_name=liquid_name))
 
     message_q.put("FIN")
+
 
 def process_df(diff_exp_genes: list[str], task_q: Queue, output_q: Queue):
     histogram = [list() for i in range(len(diff_exp_genes) + 1)]
@@ -34,7 +39,8 @@ def process_df(diff_exp_genes: list[str], task_q: Queue, output_q: Queue):
     output_q.put(histogram)
 
 
-def produce_histogram(propagation_files_root, reference_file, diff_genes_file, output_path, num_workers):
+def produce_histogram(propagation_files_root, reference_file, diff_genes_file, output_path, num_workers,
+                      merge_liquids: bool=False, liquid_to_check: str="info"):
     print("ya")
     propagation_files = Path(propagation_files_root).glob("*knockout.json")
 
@@ -54,7 +60,8 @@ def produce_histogram(propagation_files_root, reference_file, diff_genes_file, o
         producer_input_queue.put("HALT")
 
     producer_pool = Pool(producing_workers, produce_df,
-                         [reference_file, producer_input_queue, processor_queue, producer_message_queue])
+                         [reference_file, producer_input_queue, processor_queue, producer_message_queue,
+                          merge_liquids, liquid_to_check])
     processor_pool = Pool(processing_workers, process_df,
                           [diff_exp_genes, processor_queue, output_queue])
 
