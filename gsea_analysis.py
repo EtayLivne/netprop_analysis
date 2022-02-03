@@ -3,7 +3,7 @@ from crispr import get_crispr_rankings
 import pandas as pd
 from scipy import stats
 from gsea.gsea_data import GSEAData
-from gsea.gsea_analysis import GSEAAnalysis
+from gsea.gsea_analysis import GSEAAnalysis, MultiprocessGSEAAnalysis
 
 from utils.utils import load_json, dump_json
 
@@ -34,6 +34,16 @@ def gsea_result_spearman(scored_knockouts_path: str, crispr_scores_path: str, tr
     # df = pd.merge(pd.DataFrame.from_dict(gsea_data, orient="index", columns="genes"), crispr_ranked_nodes.to_frame(), how="inner")
     print(f"{exclude_counter} genes have been excluded")
     return stats.spearmanr(gsea_input, crispr_input)
+
+
+def gsea_scores_top_propagated(ref_prop_file: str, props_root_folder: str,output_path: str,
+                               pathway_size: int=100, num_processes: int=80):
+    data = GSEAData()
+    data.reference_propagation = ref_prop_file
+    data.propagation_files = list(Path(props_root_folder).glob('h_sapiens*.json'))
+    data.set_target_pathway_to_top_prop_scores(ref_prop_file, k=pathway_size)
+    analysis = MultiprocessGSEAAnalysis(num_processes=num_processes)
+    analysis.analyze(data, output_path=output_path)
 
 
 def gsea_scores(ref_prop_file: str, histogram_file: str, props_root_folder: str, diff_exp_genes: str, outpath: str):
