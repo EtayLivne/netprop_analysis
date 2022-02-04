@@ -37,7 +37,8 @@ class GSEAData:
     def set_target_pathway_to_diff_exp_genes(self, diff_exp_genes_path: str):
         self.target_pathway = self._load_diff_exp_genes(diff_exp_genes_path)
 
-    def set_target_pathway_to_top_prop_scores(self, prop_file, k: int=100, liquid: str="info"):
-        self.target_pathway = set(sorted([n for n in PropagationResultModel.parse_file(prop_file).nodes],
-                                         key=lambda n: n.liquids[liquid], reverse=True)[:k])
+    def set_target_pathway_to_top_prop_scores(self, prop_file, k: int = 100, liquid: str = "info"):
+        nodes = PropagationResultModel.parse_file(prop_file).nodes
+        self.target_pathway = set(sorted([n for n in nodes],
+                                         key=lambda n: nodes[n].liquids[liquid], reverse=True)[:k])
 

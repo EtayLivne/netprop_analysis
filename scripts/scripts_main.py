@@ -16,26 +16,26 @@ if __name__ == "__main__":
     #     new_dfs[df_name].to_csv(root_dir / f"{df_name}.csv", index=False)
 
     # to_entrez(r"D:\data\networks\metastudy\RNA interactome.csv",
-    #           r"D:\data\networks\metastudy\RNA interactome_translated.csv",
+    #           r"D:\data\networks\metastudy\rna_interactome_translated.csv",
     #           r"D:\data\other\symbol_to_entrezgene.json")
     # extract_uniprot(r"D:\data\networks\metastudy\rna interactome_translated.csv",
     #                 r"D:\data\networks\metastudy\rna_uniprots.txt")
     # ncbi_query_strings(r"D:\data\networks\metastudy\proteome_uniprots.txt",
     #                    r"D:\data\networks\metastudy\proteome_uniprots_query_strings.txt")
-    # nw = CoVToHumanMeta(R"D:\data\networks\H_sapiens_aug_2020.net",
-    #                     protein_interactions_path=R"D:\data\networks\metastudy\Protein interactome.csv",
-    #                     rna_interactions_path=r"D:\data\networks\metastudy\RNA interactome.csv").load()
+    nw = CoVToHumanMeta(R"D:\data\networks\H_sapiens_aug_2020.net",
+                        protein_interactions_path=R"D:\data\networks\metastudy\protein_interactome_translated.csv",
+                        rna_interactions_path=r"D:\data\networks\metastudy\rna_interactome_translated.csv").load()
 
 
-    new_translations_proteins = back_to_entrez(r"D:\data\networks\metastudy\proteome_uniprots_query_strings naama.txt", None,
-                                          r"D:\data\networks\metastudy\proteome_outputs.txt")
-
-    new_translations_rna = back_to_entrez(r"D:\data\networks\metastudy\rna_uniprots_query_strings_naama.txt"
-                                          ,None,r"D:\data\networks\metastudy\rna_outputs.txt")
-
-    new_tranlations = new_translations_proteins | new_translations_rna
-    update_translation_dict(r"D:\data\other\symbol_to_entrezgene.json",new_tranlations,r"D:\data\other\symbol_to_entrezgene_new.json" )
-    x = 7
+    # new_translations_proteins = back_to_entrez(r"D:\data\networks\metastudy\proteome_uniprots_query_strings naama.txt", None,
+    #                                       r"D:\data\networks\metastudy\proteome_outputs.txt")
+    #
+    # new_translations_rna = back_to_entrez(r"D:\data\networks\metastudy\rna_uniprots_query_strings_naama.txt"
+    #                                       ,None,r"D:\data\networks\metastudy\rna_outputs.txt")
+    #
+    # new_tranlations = new_translations_proteins | new_translations_rna
+    # update_translation_dict(r"D:\data\other\symbol_to_entrezgene.json",new_tranlations,r"D:\data\other\symbol_to_entrezgene_new.json" )
+    # x = 7
 
     # multi_prop_analysis(list(Path(r"D:\data\propagations\randomized\merged_covid").glob("*.json")) + [r"D:\data\propagations\new_vanilla\merged_covid\no_knockouts.json"],
     #                     r"D:\data\diff_genes\stukalov\diff_exp_unified_translated.json",

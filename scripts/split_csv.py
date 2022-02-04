@@ -7,15 +7,18 @@ def split_csv(file_path: str, split_col: str):
     return pd.Series({ind: df.loc[ind].reset_index() for ind in set(df.index)})
 
 
-def to_entrez(csv_path, outpath, trans_dict):
+def to_entrez(csv_path, outpath, trans_dict, drop_untranslated=True):
     trans = load_json(trans_dict)
-    trans_func = lambda x: trans.get(x, "etay")
+    trans_func = lambda x: trans.get(x, "untranslatable")
 
     df = pd.read_csv(csv_path)
-    df["Entrez"] = df["Gene name"].apply(trans_func)
-    failed_translations = df[df["Entrez"] == "etay"]
-    failed = list(failed_translations["Gene name"])
-    print(f"failed to translate the following genes: {failed}")
+    df["entrez"] = df["Gene name"].apply(trans_func)
+    if drop_untranslated:
+        df = df[df["entrez"] != "untranslatable"]
+    else:
+        failed_translations = df[df["entrez"] == "untranslatable"]
+        failed = list(failed_translations["Gene name"])
+        print(f"failed to translate the following genes: {failed}")
     df.to_csv(outpath)
 
 

@@ -54,6 +54,7 @@ class CoVToHumanMeta(HSapiensNetworkLoader):
         interactions = sum([self._load_rna_interactions(), self._load_protein_interactions()], [])
 
         for cov_source, human_target in interactions:
+            human_target = str(human_target)
             if cov_source not in network:
                 network.add_node(cov_source, **self._new_node_attrs(SpeciesIDs.CORONAVIRUS.value))
             if human_target not in network:
@@ -68,12 +69,14 @@ class CoVToHumanMeta(HSapiensNetworkLoader):
             return []
 
 
-        id_col = "Gene name"
+        id_col = "entrez"
         df = pd.read_csv(self.protein_interactions_path,
                          usecols=["Assay cell line", "Bait", "Reference", id_col], index_col="Assay cell line")
+        df.dropna(inplace=True)
+        df[id_col] = df[id_col].astype("int32")
         interactions = []
-        if self.merged_covid:
-            df["Bait"] = df["Bait"].apply(lambda name: "covid_proteins")
+        # if self.merged_covid:
+        #     df["Bait"] = df["Bait"].apply(lambda name: "covid_proteins")
 
         validation_counter = dict()
         for cell_line in set(df.index):
@@ -93,9 +96,11 @@ class CoVToHumanMeta(HSapiensNetworkLoader):
     def _load_rna_interactions(self):
         if not self.rna_interactions_path:
             return []
-        id_col = "Gene name"
+        id_col = "entrez"
         df = pd.read_csv(self.rna_interactions_path,
-                         usecols=["Assay cell line", id_col], index_col="Assay cell line")
+                         usecols=["Assay cell line", id_col])
+        df[id_col].astype("int32")
+        df.set_index(id_col)
         interactions = []
         for cell_line in set(df.index):
             if cell_line not in self._APPROVED_CELL_LINES:
