@@ -68,15 +68,12 @@ class CoVToHumanMeta(HSapiensNetworkLoader):
         if not self.protein_interactions_path:
             return []
 
-
         id_col = "entrez"
         df = pd.read_csv(self.protein_interactions_path,
                          usecols=["Assay cell line", "Bait", "Reference", id_col], index_col="Assay cell line")
         df.dropna(inplace=True)
         df[id_col] = df[id_col].astype("int32")
         interactions = []
-        # if self.merged_covid:
-        #     df["Bait"] = df["Bait"].apply(lambda name: "covid_proteins")
 
         validation_counter = dict()
         for cell_line in set(df.index):
@@ -100,7 +97,7 @@ class CoVToHumanMeta(HSapiensNetworkLoader):
         df = pd.read_csv(self.rna_interactions_path,
                          usecols=["Assay cell line", id_col])
         df[id_col].astype("int32")
-        df.set_index(id_col)
+        df.set_index("Assay cell line", inplace=True)
         interactions = []
         for cell_line in set(df.index):
             if cell_line not in self._APPROVED_CELL_LINES:
