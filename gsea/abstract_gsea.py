@@ -11,14 +11,14 @@ class AbstractGSEAAnalysis(metaclass=ABCMeta):
     def _validate_data(self, data: GSEAData):
         return data.propagation_files and data.reference_propagation and data.target_pathway
 
-    def analyze(self, data: GSEAData, output_path: str):
+    def analyze(self, data: GSEAData, output_path: str, liquid: str = "info"):
         if not self._validate_data(data):
             print(f"prop files: {data.propagation_files}\n "
                   f"ref prop: {data.reference_propagation}\n"
                   f"pathway: {data.target_pathway}")
             raise ValueError("YOUR DATA IS BAD ETAY")
         try:
-            output = self._analyze(data)
+            output = self._analyze(data, liquid=liquid)
         except Exception as e:
             print("error while attempting analysis")
             raise e

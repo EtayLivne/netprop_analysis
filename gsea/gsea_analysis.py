@@ -29,9 +29,10 @@ def gene_set_enrichment(sorted_genes: pd.Series, pathway: set[str], ro=1):
 
 
 class GSEAAnalysis(AbstractGSEAAnalysis):
-    def _analyze(self, data: GSEAData) -> dict:
+    def _analyze(self, data: GSEAData, liquid: str = "info") -> dict:
         output = dict()
-        for prop_id, prop_series in scores_iter(data.reference_propagation, data.propagation_files, sort=True):
+        for prop_id, prop_series in scores_iter(data.reference_propagation, data.propagation_files,
+                                                liquid_name=liquid, sort=True):
             output[prop_id] = gene_set_enrichment(prop_series, data.target_pathway)
         return output
 
@@ -42,8 +43,8 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
         self.num_processes = num_processes
 
     @staticmethod
-    def _score_producing_worker(reference_file, tested_files: list[str], task_q: Queue):
-        for prop_id, prop_series in scores_iter(reference_file, tested_files, sort=True):
+    def _score_producing_worker(reference_file, tested_files: list[str], liquid: str, task_q: Queue):
+        for prop_id, prop_series in scores_iter(reference_file, tested_files, liquid_name=liquid,  sort=True):
             task_q.put((prop_id, prop_series))
         sleep(60)
         task_q.put("HALT")
@@ -62,7 +63,7 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
                 print(f"look at me! printed {counter} in total!")
         out_q.put("DONE")
 
-    def _analyze(self, data: GSEAData) -> dict:
+    def _analyze(self, data: GSEAData, liquid: str = "info") -> dict:
         task_q, out_q = Queue(), Queue()
         num_workers = (self.num_processes // 2) - 1
         num_score_producing_workers = num_workers
@@ -70,6 +71,7 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
         score_producing_workers = [Process(target=self._score_producing_worker,
                                            args=(data.reference_propagation,
                                                  data.propagation_files[i * chunk_size: (i + 1) * chunk_size],
+                                                 liquid,
                                                  task_q))
                                    for i in range(num_score_producing_workers)]
         for worker in score_producing_workers:
@@ -86,9 +88,5 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
                 continue
             else:
                 output.update(message)
-
-        pool.close(); pool.join()
-        task_q.close(); task_q.join_thread()
-        out_q.close(); out_q.join_thread()
 
         return output
