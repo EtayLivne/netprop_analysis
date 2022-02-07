@@ -31,7 +31,7 @@ class CovToHumanStukalov(HSapiensNetworkLoader):
         return network
 
 
-class CoVToHumanMeta(HSapiensNetworkLoader):
+class CovToHumanMeta(HSapiensNetworkLoader):
     _ALL_CELL_LINES = ["Huh7", "Huh7.5", "A549 ACE2", "Calu-3", "Caco-2", "Vero", "Vero-E6",
                        "293T-ACE2", "HEKT293T", "HEKT293T-ACE2","A549"]
     _APPROVED_CELL_LINES = ["HEK293T", "HEK293T-ACE2", "293T-ACE2"]

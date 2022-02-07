@@ -2,7 +2,7 @@ import pandas as pd
 from scripts.correlate_prop_scores_to_diff_exp import single_prop_analysis, multi_prop_analysis
 from pathlib import Path
 from scripts.split_csv import split_csv, to_entrez, extract_uniprot, ncbi_query_strings, back_to_entrez, update_translation_dict
-from utils.new_file_loaders import CoVToHumanMeta
+from utils.new_file_loaders import CovToHumanMeta
 from scripts.prop_config_from_network import patch_prior_set_by_network_tag, transfer_suppressed_sets
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-from utils.new_file_loaders import CoVToHumanMeta
+from utils.new_file_loaders import CovToHumanMeta
 from utils.utils import dump_json, load_json
 from netprop.models import ConfigModel, PropagationSourceModel, PriorSetModel
 import networkx as nx

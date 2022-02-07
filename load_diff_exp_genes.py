@@ -7,7 +7,8 @@ class DiffExpGenesSources(Enum):
     BOJKOVA = "bojkova"
 
 def load_bojkova(path: str):
-    pass
+    with open(path, 'r') as handler:
+        return set([n.strip() for n in handler.readlines()])
 
 
 def load_stukalov(diff_exp_genes_file_path: str):

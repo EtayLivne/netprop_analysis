@@ -1,6 +1,6 @@
 import json
 from netprop.propagation import propagate_from_config, NETWORK_ORDERING_KEYWORD
-from utils.new_file_loaders import CoVToHumanMeta
+from utils.new_file_loaders import CovToHumanMeta
 
 def histogram_to_json(path, outpath):
     with open(path, 'r') as handler:

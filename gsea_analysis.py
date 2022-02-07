@@ -37,11 +37,12 @@ def gsea_result_spearman(scored_knockouts_path: str, crispr_scores_path: str, tr
 
 
 def gsea_scores_top_propagated(ref_prop_file: str, props_root_folder: str,output_path: str,
-                               pathway_size: int=100, num_processes: int=80):
+                               pathway_size: int=100, num_processes: int=80,
+                               liquid: str = "info", file_pattern="*knockout*.json"):
     data = GSEAData()
     data.reference_propagation = ref_prop_file
-    data.propagation_files = list(Path(props_root_folder).glob('h_sapiens*.json'))
-    data.set_target_pathway_to_top_prop_scores(ref_prop_file, k=pathway_size)
+    data.propagation_files = list(Path(props_root_folder).glob(file_pattern))
+    data.set_target_pathway_to_top_prop_scores(ref_prop_file, k=pathway_size, liquid=liquid)
     analysis = MultiprocessGSEAAnalysis(num_processes=num_processes)
     analysis.analyze(data, output_path=output_path)
 

@@ -64,7 +64,8 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
 
     def _analyze(self, data: GSEAData) -> dict:
         task_q, out_q = Queue(), Queue()
-        num_score_producing_workers = self.num_processes // 3
+        num_workers = (self.num_processes // 2) - 1
+        num_score_producing_workers = num_workers
         chunk_size = len(data.propagation_files) // num_score_producing_workers
         score_producing_workers = [Process(target=self._score_producing_worker,
                                            args=(data.reference_propagation,
@@ -74,7 +75,7 @@ class MultiprocessGSEAAnalysis(AbstractGSEAAnalysis):
         for worker in score_producing_workers:
             worker.start()
 
-        analysis_workers = 2*self.num_processes // 3
+        analysis_workers = num_workers
         pool = Pool(self.num_processes, self._analysis_worker, (data.target_pathway, task_q, out_q))
         output = dict()
         done_count = analysis_workers
