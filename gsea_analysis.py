@@ -13,6 +13,13 @@ def crispr_scores_for_spearman(cripsr_scores_path: str, translation_path: str)->
 
 
 
+def spearman_sanity(crispr_scores_path, translation_path):
+    crispr_ranked_nodes = crispr_scores_for_spearman(crispr_scores_path, translation_path)
+    d = {f"{entrez}_knockout": (crispr_ranked_nodes[entrez], []) for entrez in crispr_ranked_nodes.index}
+    dump_json(d, "temp.json")
+    print(gsea_result_spearman("temp.json", crispr_scores_path, translation_path))
+    Path("temp.json").unlink()
+
 def gsea_result_spearman(scored_knockouts_path: str, crispr_scores_path: str, translation_path: str):
     # scored_knockouts_path = r"D:\analysis_output.json"
     # crispr_scores_path = r"D:\data\other\crispr_screen.csv"
