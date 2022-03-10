@@ -1,8 +1,9 @@
 import json
 import pandas as pd
 from netprop.models import PropagationResultModel
-from typing import Callable
+from typing import Callable, Union
 from scripts.merge_fluids import merge_all_liquids
+from functools import partial
 
 def _propagation_diff_to_df(prop1: PropagationResultModel, prop2: PropagationResultModel,
                             positive_filter: Callable = None, liquid_name: str="info") -> pd.Series:
@@ -53,12 +54,25 @@ def scores_iter(ref_file: str, tested_files: list[str],
 
 
 # When propagation is sorted, nodes with higher liquids will be first (order is descending)
-def propagation_to_df(propagation: PropagationResultModel, by_liquid: str="info", sort: bool=False):
-    prop_id = propagation.id
-    prop_series = pd.Series({n: propagation.nodes[n].liquids[by_liquid] for n in propagation.nodes})
-    if sort:
-        prop_series.sort_values(ascending=False, inplace=True)
-    return prop_id, prop_series
+def propagations_to_df(propagations: Union[list[PropagationResultModel], list[str]], by_liquid: str="info", drop_na=True):
+    if isinstance(propagations[0], str):
+        # multiprocess this shit
+        propagations = [PropagationResultModel.parse_file(file) for file in propagations]
+
+    how = "inner" if drop_na else "outer"
+    return pd.merge([p.prop_scroes_as_series(by_liquids=by_liquid) for p in propagations], on="nodes", how=how)
+
+
+def infer_p_value(prop_df: pd.DataFrame, ref_prop: str, by_liquid: str="info"):
+    columns = filter(lambda c: c.split(".")[0] != ref_prop and c.split(".")[1] == by_liquid, prop_df.columns)
+    return prop_df.apply(lambda row: (1 + (row[columns] > row[ref_prop]).sum()) / len(row), axis=1)
+
+
+# calcs subtract_from - subtract
+def infer_prop_diff(prop_df: pd.DataFrame, subtract_from: str, subtract: str, by_liquid="info"):
+    col1 = f"{subtract_from}.{by_liquid}"
+    col2 = f"{subtract}.{by_liquid}"
+    return col1 - col2
 
 
 if __name__ == "__main__":

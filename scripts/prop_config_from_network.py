@@ -3,7 +3,6 @@ from utils.utils import dump_json, load_json
 from netprop.models import ConfigModel, PropagationSourceModel, PriorSetModel
 import networkx as nx
 
-
 def patch_prior_set_by_network_tag(network: nx.Graph, prior_set_tag: dict[str,str], existing_conf_file: str, output_path: str,
                                    source_of: list[str] = None, confidence: float = 0.7, prior_set_id: str=None):
 
