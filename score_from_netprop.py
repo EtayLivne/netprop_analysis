@@ -60,7 +60,10 @@ def propagations_to_df(propagations: Union[list[PropagationResultModel], list[st
         propagations = [PropagationResultModel.parse_file(file) for file in propagations]
 
     how = "inner" if drop_na else "outer"
-    return pd.merge([p.prop_scroes_as_series(by_liquids=by_liquid) for p in propagations], on="nodes", how=how)
+    from functools import reduce
+    dfs = [p.prop_scroes_as_series(by_liquids=by_liquid) for p in propagations]
+    df = reduce(lambda df1, df2: pd.merge(df1, df2, on='nodes', how=how), dfs)
+    return df
 
 
 def infer_p_value(prop_df: pd.DataFrame, ref_prop: str, by_liquid: str="info"):
