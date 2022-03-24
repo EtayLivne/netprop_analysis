@@ -15,7 +15,12 @@ def histogram_to_json(path, outpath):
         json.dump(dictogram, handler, indent=4)
 
 
-
+def construct_network():
+    nw = CovToHumanMeta(r"D:\data\networks\H_sapiens_aug_2020.net",
+                        r"D:\data\networks\metastudy\protein_interactome_translated.csv",
+                        r"D:\data\networks\metastudy\rna_interactome_translated.csv",
+                        rna_cell_lines=['Huh7', 'Huh7.5'], protein_cell_lines="all").load()
+    NetpropNetwork.record_network(nw, r"D:\data\networks\metastudy\complete_networks\huh7_only.json")
 
 
 
@@ -23,9 +28,9 @@ def main():
     #randomize_network(100, 15,
     #                  NetpropNetwork, [r"D:\data\networks\cov_to_human\metastudy.json"], {},
     #                  r"D:\data\networks\cov_to_human\rand_metastudy")
-
-    propagate_from_config(r"D:\configurations\rna_randomized_prop_config.json", ordering={"network": 100})
-    print("yay done <3")
+    construct_network()
+    # propagate_from_config(r"D:\configurations\rna_randomized_prop_config.json", ordering={"network": 100})
+    # print("yay done <3")
 
 
 

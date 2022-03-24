@@ -35,7 +35,7 @@ class CovToHumanStukalov(HSapiensNetworkLoader):
 
 class CovToHumanMeta(HSapiensNetworkLoader):
     _ALL_CELL_LINES = ["Huh7", "Huh7.5", "A549 ACE2", "Calu-3", "Caco-2", "Vero", "Vero-E6",
-                       "293T-ACE2", "HEKT293T", "HEKT293T-ACE2","A549"]
+                       "293T-ACE2", "HEK293T", "HEK293T-ACE2","A549"]
     _DEFAULT_CELL_LINES = {"proteins" : ["HEK293T", "HEK293T-ACE2", "293T-ACE2"],
                             "rna": ["HEK293T", "HEK293T-ACE2", "293T-ACE2"]}
 
@@ -58,7 +58,7 @@ class CovToHumanMeta(HSapiensNetworkLoader):
         if self.protein_cell_lines == "all":
             self.protein_cell_lines = self._ALL_CELL_LINES
 
-        if nonexistent := (set(self.rna_cell_lines + self.protein_cell_lines) | set(self._ALL_CELL_LINES)):
+        if nonexistent := [g for g in self.protein_cell_lines + self.rna_cell_lines if g not in self._ALL_CELL_LINES]:
             raise ValueError(f"the following cell lines have been specified but do not exist: {nonexistent}")
         self.merged_covid = merged_covid
 
@@ -167,4 +167,4 @@ class NetpropCovToHumanLoader(NetpropNetwork):
         return interactions
 
 
-class Load
+# class Load

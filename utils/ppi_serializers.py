@@ -40,7 +40,7 @@ def load_metadata_protein_interactions(file_path, approved_cell_lines, merge=Fal
             key = (row["Bait"], row[id_col])
             validation_counter[key] = validation_counter.get(key, 0) + 1
 
-        interactions.extend([k for k in validation_counter if validation_counter[k] > 1])
+    interactions.extend([k for k in validation_counter if validation_counter[k] > 1])
 
     if merge:
         interactions = [("covid_proteins", x[1]) for x in interactions]
