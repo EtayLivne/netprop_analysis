@@ -57,18 +57,30 @@ def scores_iter(ref_file: str, tested_files: list[str],
 def propagations_to_df(propagations: Union[list[PropagationResultModel], list[str]], by_liquid: str="info", drop_na=True):
     if isinstance(propagations[0], str):
         # multiprocess this shit
-        propagations = [PropagationResultModel.parse_file(file) for file in propagations]
-
+        #propagations = [PropagationResultModel.parse_file(file) for file in propagations]
+        props = []
+        for file in propagations:
+            print(file)
+            props.append(PropagationResultModel.parse_file(file))
     how = "inner" if drop_na else "outer"
     from functools import reduce
-    dfs = [p.prop_scroes_as_series(by_liquids=by_liquid) for p in propagations]
+    dfs = [p.prop_scroes_as_series(by_liquids=by_liquid) for p in props]
     df = reduce(lambda df1, df2: pd.merge(df1, df2, on='nodes', how=how), dfs)
     return df
 
 
 def infer_p_value(prop_df: pd.DataFrame, ref_prop: str, by_liquid: str="info"):
-    columns = filter(lambda c: c.split(".")[0] != ref_prop and c.split(".")[1] == by_liquid, prop_df.columns)
-    return prop_df.apply(lambda row: (1 + (row[columns] > row[ref_prop]).sum()) / len(row), axis=1)
+    #columns = filter(lambda c: c.split(".")[0] != ref_prop and c.split(".")[1] == by_liquid, prop_df.columns)
+    columns = filter(lambda c: c.split(".")[0] != ref_prop and "info" in c, prop_df.columns)
+
+    columns = list(columns)
+
+
+
+    p_values = prop_df.apply(lambda row: (1 + (row[columns] > row[ref_prop]).sum()) / len(row), axis=1)
+    p_values.rename("p_values", inplace=True)
+    new_df = pd.DataFrame({"nodes": prop_df["nodes"], "p_values": p_values})
+    return new_df
 
 
 # calcs subtract_from - subtract

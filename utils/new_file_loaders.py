@@ -1,7 +1,9 @@
-from netprop.networks.loaders.single import HSapiensNetworkLoader, NetpropNetwork
-from netprop.generic_utils.constants import SpeciesIDs
-from utils.utils import load_json
 import pandas as pd
+
+from netprop.generic_utils.constants import SpeciesIDs
+from netprop.networks.loaders.single import HSapiensNetworkLoader, NetpropNetwork
+
+from utils.ppi_serializers import load_metadata_rna, load_metadata_protein_interactions
 
 class CovToHumanStukalov(HSapiensNetworkLoader):
     MERGED_COVID_NODE_NAME = "covid"
@@ -34,11 +36,12 @@ class CovToHumanStukalov(HSapiensNetworkLoader):
 class CovToHumanMeta(HSapiensNetworkLoader):
     _ALL_CELL_LINES = ["Huh7", "Huh7.5", "A549 ACE2", "Calu-3", "Caco-2", "Vero", "Vero-E6",
                        "293T-ACE2", "HEKT293T", "HEKT293T-ACE2","A549"]
-    _APPROVED_CELL_LINES = ["HEK293T", "HEK293T-ACE2", "293T-ACE2"]
+    _DEFAULT_CELL_LINES = {"proteins" : ["HEK293T", "HEK293T-ACE2", "293T-ACE2"],
+                            "rna": ["HEK293T", "HEK293T-ACE2", "293T-ACE2"]}
 
     def __init__(self, human_network_path: str,
                  protein_interactions_path: str=None, rna_interactions_path: str=None,
-                 merged_covid=False):
+                 merged_covid=False, rna_cell_lines=None, protein_cell_lines=None):
 
         super().__init__(human_network_path)
 
@@ -47,6 +50,16 @@ class CovToHumanMeta(HSapiensNetworkLoader):
 
         self.protein_interactions_path = protein_interactions_path
         self.rna_interactions_path = rna_interactions_path
+        self.rna_cell_lines = rna_cell_lines or self._DEFAULT_CELL_LINES["rna"]
+        self.protein_cell_lines = protein_cell_lines or self._DEFAULT_CELL_LINES["proteins"]
+
+        if self.rna_cell_lines == "all":
+            self.rna_cell_lines = self._ALL_CELL_LINES
+        if self.protein_cell_lines == "all":
+            self.protein_cell_lines = self._ALL_CELL_LINES
+
+        if nonexistent := (set(self.rna_cell_lines + self.protein_cell_lines) | set(self._ALL_CELL_LINES)):
+            raise ValueError(f"the following cell lines have been specified but do not exist: {nonexistent}")
         self.merged_covid = merged_covid
 
     def load(self, *args, **kwargs):
@@ -68,43 +81,13 @@ class CovToHumanMeta(HSapiensNetworkLoader):
         if not self.protein_interactions_path:
             return []
 
-        id_col = "entrez"
-        df = pd.read_csv(self.protein_interactions_path,
-                         usecols=["Assay cell line", "Bait", "Reference", id_col], index_col="Assay cell line")
-        df.dropna(inplace=True)
-        df[id_col] = df[id_col].astype("int32")
-        interactions = []
-
-        validation_counter = dict()
-        for cell_line in set(df.index):
-            if cell_line not in self._APPROVED_CELL_LINES:
-                continue
-            for _, row in df.loc[cell_line].iterrows():
-                key = (row["Bait"], row[id_col])
-                validation_counter[key] = validation_counter.get(key, 0) + 1
-
-            interactions.extend([k for k in validation_counter if validation_counter[k] > 1])
-
-        if self.merged_covid:
-            interactions = [("covid_proteins", x[1]) for x in interactions]
-
-        return interactions
+        return load_metadata_protein_interactions(self.protein_interactions_path, self.protein_cell_lines,
+                                                  self.merged_covid)
 
     def _load_rna_interactions(self):
         if not self.rna_interactions_path:
             return []
-        id_col = "entrez"
-        df = pd.read_csv(self.rna_interactions_path,
-                         usecols=["Assay cell line", id_col])
-        df[id_col].astype("int32")
-        df.set_index("Assay cell line", inplace=True)
-        interactions = []
-        for cell_line in set(df.index):
-            if cell_line not in self._APPROVED_CELL_LINES:
-                continue
-            interactions.extend([("covid_rna", row[id_col]) for _, row in df.loc[cell_line].iterrows()])
-
-        return interactions
+        return load_metadata_rna(self.rna_interactions_path, self.rna_cell_lines)
 
 
 
@@ -182,3 +165,6 @@ class NetpropCovToHumanLoader(NetpropNetwork):
             interactions.extend([("covid_rna", row[id_col]) for _, row in df.loc[cell_line].iterrows()])
 
         return interactions
+
+
+class Load

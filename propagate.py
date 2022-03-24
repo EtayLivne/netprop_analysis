@@ -1,7 +1,8 @@
 import json
 from netprop.propagation import propagate_from_config, NETWORK_ORDERING_KEYWORD
-from utils.new_file_loaders import CovToHumanMeta
-from netprop.networks.loaders import NetpropNetworkModel
+from utils.new_file_loaders import CovToHumanMeta, NetpropCovToHumanLoader
+from netprop.networks.randomization import randomize_network
+from netprop.networks.loaders import NetpropNetwork
 def histogram_to_json(path, outpath):
     with open(path, 'r') as handler:
         lines = [line.replace('[', '').replace(']', '').replace(',', '').replace('\'', '').strip() for line in handler.readlines()]
@@ -19,12 +20,14 @@ def histogram_to_json(path, outpath):
 
 
 def main():
-    # propagate_from_config(r"D:\configurations\temp.json")
-    propagate_from_config(r"D:\configurations\rna_prop_conf.json", ordering={NETWORK_ORDERING_KEYWORD: 1})
-    #with open(r"D:\data\networks\try_with_covid.json", 'r') as handler:
-     #   c = json.load(handler)
+    #randomize_network(100, 15,
+    #                  NetpropNetwork, [r"D:\data\networks\cov_to_human\metastudy.json"], {},
+    #                  r"D:\data\networks\cov_to_human\rand_metastudy")
 
-    #c = NetpropNetworkModel.load()
+    propagate_from_config(r"D:\configurations\rna_randomized_prop_config.json", ordering={"network": 100})
+    print("yay done <3")
+
+
 
 if __name__ == "__main__":
     main()

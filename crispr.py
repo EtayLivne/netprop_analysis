@@ -16,3 +16,9 @@ def get_crispr_rankings(rankning_path, translator_path):
         series[dup] = dup_mean
 
     return series
+
+
+def get_huh_crispr(file_path: str):
+    with open(file_path, 'r') as handler:
+        genes = [l.strip() for l in handler.readlines()]
+    return list(set(genes))
