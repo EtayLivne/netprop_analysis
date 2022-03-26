@@ -13,8 +13,7 @@ class SinglePropROC(SinglePropMetric):
     def load_hit_set(self, data_file_path: str):
         self._hit_set = self._hit_set_load_method(data_file_path)
 
-
-    def measure_roc(self, print_plot=True):
+    def calc_metric(self):
         if not self._hit_set:
             raise MetricRuntimeError("cannot measure roc before hit set is defined!")
         elif not self._prop_df:
