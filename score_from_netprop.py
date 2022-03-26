@@ -3,7 +3,9 @@ import pandas as pd
 from netprop.models import PropagationResultModel
 from typing import Callable, Union
 from scripts.merge_fluids import merge_all_liquids
-from functools import partial
+from multiprocessing import Pool, cpu_count
+from functools import reduce
+
 
 def _propagation_diff_to_df(prop1: PropagationResultModel, prop2: PropagationResultModel,
                             positive_filter: Callable = None, liquid_name: str="info") -> pd.Series:
@@ -53,17 +55,22 @@ def scores_iter(ref_file: str, tested_files: list[str],
         yield propagation_diff_to_df(ref, test, liquid_name=liquid_name, sort=sort)
 
 
+
+def propagation_to_df(propagation: Union[PropagationResultModel, str], by_liquid: str="info", drop_na=True):
+    return propagations_to_df([propagation], by_liquid=by_liquid, drop_na=drop_na)
+
+
 # When propagation is sorted, nodes with higher liquids will be first (order is descending)
 def propagations_to_df(propagations: Union[list[PropagationResultModel], list[str]], by_liquid: str="info", drop_na=True):
+
+    # if given list of file paths, convert to list of PropagationResultModels
     if isinstance(propagations[0], str):
-        # multiprocess this shit
-        #propagations = [PropagationResultModel.parse_file(file) for file in propagations]
-        props = []
-        for file in propagations:
-            print(file)
-            props.append(PropagationResultModel.parse_file(file))
+        with Pool(max(cpu_count() - 2, 1)) as pool:
+            props = pool.map(PropagationResultModel.parse_file, propagations)
+    else:
+        props = propagations
+
     how = "inner" if drop_na else "outer"
-    from functools import reduce
     dfs = [p.prop_scroes_as_series(by_liquids=by_liquid) for p in props]
     df = reduce(lambda df1, df2: pd.merge(df1, df2, on='nodes', how=how), dfs)
     return df

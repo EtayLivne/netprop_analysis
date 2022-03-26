@@ -1,6 +1,7 @@
 
 from multiprocessing import Pool, cpu_count
 import pandas as pd
+from typing import Union
 from abc import abstractmethod, ABC
 from netprop.models import PropagationResultModel
 
@@ -30,7 +31,7 @@ class SinglePropMetric(Metric):
         self._prop_data_to_df(res)
 
     @abstractmethod
-    def _prop_data_to_df(self, res: PropagationResultModel):
+    def _prop_data_to_df(self, res: Union[PropagationResultModel, str], by_liquid: str="info"):
         self._prop_df = None
 
 
@@ -44,5 +45,5 @@ class MultiPropMetric(Metric):
         self._prop_data_to_df(res_list)
 
     @abstractmethod
-    def _prop_data_to_df(self, res_list: list[PropagationResultModel]):
+    def _prop_data_to_df(self, res_list: Union[list[PropagationResultModel], list[str]], by_liquid: str="info"):
         self._props_df = None

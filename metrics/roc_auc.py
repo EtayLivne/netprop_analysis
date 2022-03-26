@@ -1,7 +1,10 @@
 from metrics.metric import SinglePropMetric, MetricRuntimeError
 import pandas as pd
-import matplotlib.pyplot as plt
 from crispr import get_huh_crispr
+from netprop.models import PropagationResultModel
+from score_from_netprop import propagation_to_df
+from typing import Union
+
 
 class SinglePropROC(SinglePropMetric):
 
@@ -39,3 +42,6 @@ class HuhCrisprROC(SinglePropROC):
         self._hit_set_load_method = get_huh_crispr
         if data_file_path is not None:
             self.load_hit_set(data_file_path)
+
+    def _prop_data_to_df(self, res: Union[PropagationResultModel, str], by_liquid: str="info"):
+        self._prop_df = propagation_to_df(res, by_liquid=by_liquid)

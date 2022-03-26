@@ -9,4 +9,3 @@ from metrics.roc_auc import HuhCrisprROC
 if __name__ == "__main__":
     roc = HuhCrisprROC("prop_file_path", "hits_file_path")
     roc_df = roc.calc_metric()
-    
