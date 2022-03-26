@@ -19,10 +19,10 @@ class SinglePropROC(SinglePropMetric):
     def calc_metric(self):
         if not self._hit_set:
             raise MetricRuntimeError("cannot measure roc before hit set is defined!")
-        elif not self._prop_df:
+        elif self._prop_df.empty:
             raise MetricRuntimeError("cannot measure roc before prop results are defined!")
 
-        hit_df = self._prop_df[self._GENE_COLUMN_NAME].isin(self._hit_set)
+        hit_df = self._prop_df[self._NODES_COLUMN_NAME].isin(self._hit_set)
         positives = hit_df.sum()
         negatives = len(hit_df) - positives
         tpr = hit_df.cumsum() / positives
@@ -45,3 +45,10 @@ class HuhCrisprROC(SinglePropROC):
 
     def _prop_data_to_df(self, res: Union[PropagationResultModel, str], by_liquid: str="info"):
         self._prop_df = propagation_to_df(res, by_liquid=by_liquid)
+        liquid_scores = [c for c in self._prop_df.columns if by_liquid in c]
+        if len(liquid_scores) != 1:
+            raise MetricRuntimeError(f"an object of type SinglePropROC cannot handle pds with more or less than one"
+                                     f" score of matching liquid.\n"
+                                     f" Follwing columns all match the liquid {by_liquid}: {liquid_scores}")
+        score_column = liquid_scores[0]
+        self._prop_df.sort_values(score_column, ascending=False, inplace=True)

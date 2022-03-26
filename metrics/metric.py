@@ -17,12 +17,12 @@ class Metric(ABC):
 
 
 class SinglePropMetric(Metric):
-    _GENE_COLUMN_NAME = "genes"
+    _NODES_COLUMN_NAME = "nodes"
     _SCORE_COLUMN_NAME = "scores"
 
     def __init__(self, prop_file_path=None):
         if prop_file_path is None:
-            self._prop_df = pd.DataFrame(columns=[self._GENE_COLUMN_NAME, self._SCORE_COLUMN_NAME])
+            self._prop_df = pd.DataFrame(columns=[self._NODES_COLUMN_NAME, self._SCORE_COLUMN_NAME])
         else:
             self.prop_data_to_df(prop_file_path)
 
