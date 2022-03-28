@@ -36,8 +36,13 @@ class SinglePropMetric(Metric):
 
 
 class MultiPropMetric(Metric):
-    def __init__(self):
-        self._props_df = None
+    _NODES_COLUMN_NAME = "nodes"
+
+    def __init__(self, prop_files_path=None):
+        if prop_files_path is None:
+            self._props_df = pd.DataFrame(columns=[self._NODES_COLUMN_NAME])
+        else:
+            self.props_data_to_df(prop_files_path)
 
     def props_data_to_df(self, prop_file_paths: list[str], max_proc=min(cpu_count(), 40)):
         with Pool(min(len(prop_file_paths), max_proc)) as p:

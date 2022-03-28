@@ -1,4 +1,4 @@
-from metrics.metric import SinglePropMetric, MetricRuntimeError
+from metrics.metric import SinglePropMetric, MultiPropMetric, MetricRuntimeError
 import pandas as pd
 from crispr import get_huh_crispr
 from netprop.models import PropagationResultModel
@@ -7,7 +7,6 @@ from typing import Union
 
 
 class SinglePropROC(SinglePropMetric):
-
     def __init__(self, prop_file_path=None):
         super().__init__(prop_file_path=prop_file_path)
         self._hit_set_load_method = None
@@ -27,9 +26,10 @@ class SinglePropROC(SinglePropMetric):
         negatives = len(hit_df) - positives
         tpr = hit_df.cumsum() / positives
         fpr = ~hit_df.cumsum() / negatives
-
+        res = pd.concat([tpr, fpr], axis=1)
+        res.columns = ["tpr", "fpr"]
         # self._plot_roc(roc_df := pd.concat([tpr, fpr], axis=1))
-        return pd.concat([tpr, fpr], axis=1)
+        return res
 
     #TODOD
     # def _plot_roc(self, roc_df):
@@ -52,3 +52,61 @@ class HuhCrisprROC(SinglePropROC):
                                      f" Follwing columns all match the liquid {by_liquid}: {liquid_scores}")
         score_column = liquid_scores[0]
         self._prop_df.sort_values(score_column, ascending=False, inplace=True)
+
+
+
+class MultiPropRoc(MultiPropMetric):
+    def __init__(self, prop_files_path=None):
+        super().__init__(prop_files_path=prop_files_path)
+        self._hit_set_load_method = None
+        self._hit_set = None
+
+    def load_hit_set(self, data_file_path: str):
+        self._hit_set = self._hit_set_load_method(data_file_path)
+
+    def calc_metric(self):
+        if not self._hit_set:
+            raise MetricRuntimeError("cannot measure roc before hit set is defined!")
+        elif self._props_df.empty:
+            raise MetricRuntimeError("cannot measure roc before prop results are defined!")
+
+        hit_df = self._props_df[self._NODES_COLUMN_NAME].isin(self._hit_set)
+        positives = hit_df.sum()
+        negatives = len(hit_df) - positives
+        tpr = hit_df.cumsum() / positives
+        fpr = ~hit_df.cumsum() / negatives
+        res = pd.concat([tpr, fpr], axis=1)
+        res.columns = ["tpr", "fpr"]
+        # self._plot_roc(roc_df := pd.concat([tpr, fpr], axis=1))
+        return res
+
+
+class HuhCrisprPValROC(MultiPropRoc):
+    def __init__(self, prop_files_path=None, data_file_path=None):
+        super().__init__(prop_files_path=prop_files_path)
+        self._hit_set_load_method = get_huh_crispr
+        if data_file_path is not None:
+            self.load_hit_set(data_file_path)
+
+
+
+    def _prop_data_to_df(self, res_list: Union[list[PropagationResultModel], list[str]], by_liquid: str = "info"):
+        self._prop_df = propagation_to_df(res_list, by_liquid=by_liquid)
+        liquid_scores = [c for c in self._prop_df.columns if by_liquid in c]
+        if len(liquid_scores) != len(res_list):
+            raise MetricRuntimeError(f"an object of type MultiPropROC cannot handle pds with more or less than one"
+                                     f" score of matching liquid per prop result.\n"
+                                     f"Following columns all match the liquid {by_liquid}: {liquid_scores}")
+
+        reference_liquid = [c for c in liquid_scores if "original" in c]
+        if len(reference_liquid) != 1:
+            raise MetricRuntimeError(f"there needs to be exactly one prop named original and it needs to have by_liquid"
+                                     f"exactly once")
+        reference_liquid = reference_liquid[0]
+
+        def calc_p_value(row):
+            sorted_values = sorted(row[c] for c in liquid_scores)
+            return 1 + (sorted_values.index(row[reference_liquid]) / len(liquid_scores))
+
+        self._prop_df["p_value"] = self._prop_df.apply(calc_p_value)
+        self._prop_df.sort_values("p_value", ascending=False, inplace=True)
