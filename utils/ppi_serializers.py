@@ -21,7 +21,7 @@ def load_metadata_rna(file_path, approved_cell_lines):
     return interactions
 
 
-def load_metadata_protein_interactions(file_path, approved_cell_lines, merge=False):
+def load_metadata_protein_interactions(file_path, approved_cell_lines, merge=False, min_num_studies: int=1):
     # if not self.protein_interactions_path:
     #     return []
 
@@ -30,6 +30,7 @@ def load_metadata_protein_interactions(file_path, approved_cell_lines, merge=Fal
                      usecols=["Assay cell line", "Bait", "Reference", id_col], index_col="Assay cell line")
     df.dropna(inplace=True)
     df[id_col] = df[id_col].astype("int32")
+    df.Bait = df.Bait.apply(lambda name: name.upper())
     interactions = []
 
     validation_counter = dict()
@@ -40,7 +41,7 @@ def load_metadata_protein_interactions(file_path, approved_cell_lines, merge=Fal
             key = (row["Bait"], row[id_col])
             validation_counter[key] = validation_counter.get(key, 0) + 1
 
-    interactions.extend([k for k in validation_counter if validation_counter[k] > 1])
+    interactions.extend([k for k in validation_counter if validation_counter[k] > min_num_studies])
 
     if merge:
         interactions = [("covid_proteins", x[1]) for x in interactions]

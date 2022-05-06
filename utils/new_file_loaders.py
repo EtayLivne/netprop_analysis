@@ -34,14 +34,14 @@ class CovToHumanStukalov(HSapiensNetworkLoader):
 
 
 class CovToHumanMeta(HSapiensNetworkLoader):
-    _ALL_CELL_LINES = ["Huh7", "Huh7.5", "A549 ACE2", "Calu-3", "Caco-2", "Vero", "Vero-E6",
+    _ALL_CELL_LINES = ["HUH7", "HUH7.5", "A549 ACE2", "Calu-3", "Caco-2", "Vero", "Vero-E6",
                        "293T-ACE2", "HEK293T", "HEK293T-ACE2","A549"]
     _DEFAULT_CELL_LINES = {"proteins" : ["HEK293T", "HEK293T-ACE2", "293T-ACE2"],
                             "rna": ["HEK293T", "HEK293T-ACE2", "293T-ACE2"]}
 
     def __init__(self, human_network_path: str,
                  protein_interactions_path: str=None, rna_interactions_path: str=None,
-                 merged_covid=False, rna_cell_lines=None, protein_cell_lines=None):
+                 merged_covid=False, rna_cell_lines=None, protein_cell_lines=None, min_num_studies: int=1):
 
         super().__init__(human_network_path)
 
@@ -61,6 +61,7 @@ class CovToHumanMeta(HSapiensNetworkLoader):
         if nonexistent := [g for g in self.protein_cell_lines + self.rna_cell_lines if g not in self._ALL_CELL_LINES]:
             raise ValueError(f"the following cell lines have been specified but do not exist: {nonexistent}")
         self.merged_covid = merged_covid
+        self.min_min_studies = min_num_studies
 
     def load(self, *args, **kwargs):
         network = super().load()
@@ -82,7 +83,7 @@ class CovToHumanMeta(HSapiensNetworkLoader):
             return []
 
         return load_metadata_protein_interactions(self.protein_interactions_path, self.protein_cell_lines,
-                                                  self.merged_covid)
+                                                  self.merged_covid, min_num_studies=self.min_min_studies)
 
     def _load_rna_interactions(self):
         if not self.rna_interactions_path:
@@ -98,7 +99,7 @@ class NetpropCovToHumanLoader(NetpropNetwork):
 
     def __init__(self, human_network_path: str,
                  protein_interactions_path: str=None, rna_interactions_path: str=None,
-                 merged_covid=False):
+                 merged_covid=False, min_num_studies: int=1):
 
         super().__init__(human_network_path)
 
@@ -108,6 +109,7 @@ class NetpropCovToHumanLoader(NetpropNetwork):
         self.protein_interactions_path = protein_interactions_path
         self.rna_interactions_path = rna_interactions_path
         self.merged_covid = merged_covid
+        self.min_num_studies = min_num_studies
 
     def load(self, *args, **kwargs):
         network = super().load(*args, **kwargs)
@@ -143,7 +145,7 @@ class NetpropCovToHumanLoader(NetpropNetwork):
                 key = (row["Bait"], row[id_col])
                 validation_counter[key] = validation_counter.get(key, 0) + 1
 
-            interactions.extend([k for k in validation_counter if validation_counter[k] > 1])
+            interactions.extend([k for k in validation_counter if validation_counter[k] > self.min_num_studies])
 
         if self.merged_covid:
             interactions = [("covid_proteins", x[1]) for x in interactions]

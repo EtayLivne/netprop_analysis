@@ -55,7 +55,6 @@ def scores_iter(ref_file: str, tested_files: list[str],
         yield propagation_diff_to_df(ref, test, liquid_name=liquid_name, sort=sort)
 
 
-
 def propagation_to_df(propagation: Union[PropagationResultModel, str], by_liquid: str="info", drop_na=True):
     return propagations_to_df([propagation], by_liquid=by_liquid, drop_na=drop_na)
 
@@ -79,10 +78,7 @@ def propagations_to_df(propagations: Union[list[PropagationResultModel], list[st
 def infer_p_value(prop_df: pd.DataFrame, ref_prop: str, by_liquid: str="info"):
     #columns = filter(lambda c: c.split(".")[0] != ref_prop and c.split(".")[1] == by_liquid, prop_df.columns)
     columns = filter(lambda c: c.split(".")[0] != ref_prop and "info" in c, prop_df.columns)
-
     columns = list(columns)
-
-
 
     p_values = prop_df.apply(lambda row: (1 + (row[columns] > row[ref_prop]).sum()) / len(row), axis=1)
     p_values.rename("p_values", inplace=True)
