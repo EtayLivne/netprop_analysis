@@ -3,7 +3,6 @@ from score_from_netprop import *
 from crispr import get_crispr_rankings
 from scipy.stats import spearmanr
 from pathlib import Path
-from metrics.roc_auc import HuhCrisprROC
 from netprop.networks.loaders import NetpropNetwork, CombinedHumanCovidNetworkLoader
 from netprop.models import ConfigModel
 from netprop.propagation import propagate_from_config
@@ -11,312 +10,9 @@ import networkx as nx
 from random import shuffle, sample
 from math import ceil
 import json
-import numpy as np
-from scripts.draw_network import draw_prop_network, draw_network
-from multiprocessing import Process
-from scripts.file import calc_protein_p_value, get_intersection_quality_metrics, intersection_bar_plot
-
-
-def merge_prior_sets(conf: str, new_conf: str, confidence: float=0.7) -> None:
-    conf_to_patch = ConfigModel.parse_file(conf)
-    all_nodes = []
-    for p in conf_to_patch.prior_set:
-        all_nodes += p.nodes
-
-    conf_to_patch.prior_set = [
-        {
-            "nodes": all_nodes,
-            "id": "all",
-            "confidence": 0.7
-        }
-    ]
-
-    with open(new_conf, 'w') as handler:
-        json.dump(conf_to_patch.dict(exclude_unset=True), handler, indent=4)
-
-# Returns all nodes in the graph that are not covid nodes themselves but have a covid neighbor
-def get_covid_interactors(network: nx.Graph) -> set[str]:
-    cov_interactors = set()
-    for _, interactors in gen_covid_interactors_by_protein(network):
-        cov_interactors |= interactors
-    return cov_interactors
-
-
-def gen_covid_interactors_by_protein(network: nx.Graph) -> set[str]:
-    cov_nodes = [n for n, data in network.nodes(data=True) if data["species_id"] == "sars-cov-2"]
-    for node in cov_nodes:
-        yield node, set(network.neighbors(node))
-
-
-def cov_interactors_prior_set(nw: nx.Graph, base_conf_path: str, new_conf_path: str,
-                              prop_output_dir: str=None, confidence=0.7, method="iterative",
-                              merge_sources: bool=False):
-    # nw = CombinedHumanCovidNetworkLoader(r"D:\data\networks\H_sapiens_aug_2020.net",
-    #                                      r"D:\data\networks\krogan_cov_to_human.cx",
-    #                                      r"D:\data\other\symbol_to_entrezgene.json").load()
-
-    conf_to_patch = ConfigModel.parse_file(base_conf_path)
-    if merge_sources:
-        conf_to_patch.prior_set = [
-            {
-                "nodes": [{"id": n, "source_of": ["info"]} for n in get_covid_interactors(nw)],
-                "id": "cov_interactors",
-                "confidence": confidence
-            }
-        ]
-
-    else:
-        conf_to_patch.prior_set = [
-            {
-                "nodes": [{"id": n, "source_of": ["info"]} for n in interactors],
-                "id": f"{cov_protein}_interactors",
-                "confidence": confidence
-            }
-            for cov_protein, interactors in gen_covid_interactors_by_protein(nw)
-        ]
-
-    if prop_output_dir:
-        conf_to_patch.output_dir_path = prop_output_dir
-    conf_to_patch.method = method
-    with open(new_conf_path, 'w') as handler:
-        json.dump(conf_to_patch.dict(exclude_unset=True), handler, indent=4)
-
-
-
-def partial_cov_interactors_prior_set(confidence=0.7):
-    nw = CombinedHumanCovidNetworkLoader(r"D:\data\networks\H_sapiens_aug_2020.net",
-                                         r"D:\data\networks\krogan_cov_to_human.cx",
-                                         r"D:\data\other\symbol_to_entrezgene.json").load()
-
-    cov_interactors = get_covid_interactors(nw)
-
-    boring_old_conf = ConfigModel.parse_file(r"D:\configurations\stefan1\stefan_conf_backup.json")
-    all_nodes = [{"id": n, "source_of": ["info"]} for n in cov_interactors]
-    shuffle(all_nodes)
-    chunks = [list(all_nodes[ceil(len(all_nodes) * i / 5):ceil(len(all_nodes) * (i + 1) / 5)]) for i in range(5)]
-    chunks = [[n["id"] for n in chunk] for chunk in chunks]
-    boring_old_conf.prior_set = []
-    for i, chunk in enumerate(chunks):
-        boring_old_conf.prior_set.append({
-            "nodes": [n for n in all_nodes if n["id"] not in chunk],
-            "id": f"chunk_{i}_majority",
-            "confidence": confidence
-        })
-        boring_old_conf.prior_set.append({
-            "nodes": [n for n in all_nodes if n["id"] in chunk],
-            "id": f"chunk_{i}_minority",
-            "confidence": 0.7
-        })
-
-    boring_old_conf.output_dir_path = f"D:\\data\\propagations\\stefan_cross_validation"
-    with open(f"D:\\configurations\\stefan1\\stefan_conf.json", 'w') as handler:
-        json.dump(boring_old_conf.dict(exclude_unset=True), handler, indent=4)
-
-
-def specific_protein_partial_cov_interactors_prior_set(confidence=0.7):
-    nw = CombinedHumanCovidNetworkLoader(r"D:\data\networks\H_sapiens_aug_2020.net",
-                                         r"D:\data\networks\krogan_cov_to_human.cx",
-                                         r"D:\data\other\symbol_to_entrezgene.json",
-                                         merge_covid=False).load()
-
-    for covid_protein, interactors in gen_covid_interactors_by_protein(nw):
-        boring_old_conf = ConfigModel.parse_file(r"D:\configurations\stefan1\stefan_conf_backup.json")
-        all_nodes = [{"id": n, "source_of": ["info"]} for n in interactors]
-        shuffle(all_nodes)
-        chunks = [list(all_nodes[ceil(len(all_nodes) * i / 5):ceil(len(all_nodes) * (i + 1) / 5)]) for i in range(5)]
-        chunks = [[n["id"] for n in chunk] for chunk in chunks]
-        boring_old_conf.prior_set = []
-        for i, chunk in enumerate(chunks):
-            boring_old_conf.prior_set.append({
-                "nodes": [n for n in all_nodes if n["id"] not in chunk],
-                "id": f"chunk_{i}_majority",
-                "confidence": confidence
-            })
-            boring_old_conf.prior_set.append({
-                "nodes": [n for n in all_nodes if n["id"] in chunk],
-                "id": f"chunk_{i}_minority",
-                "confidence": 0.7
-            })
-
-        boring_old_conf.output_dir_path = f"D:\\data\\propagations\\stefan_cross_validation\\{covid_protein}"
-        Path.mkdir(Path(boring_old_conf.output_dir_path), exist_ok=True)
-        with open(f"D:\\configurations\\stefan1\\stefan_conf_{covid_protein}.json", 'w') as handler:
-            json.dump(boring_old_conf.dict(exclude_unset=True), handler, indent=4)
-
-
-def random_subgroups_partial_cov_interactors_prior_set(group_size: float, num_groups: int, confidence=0.7, ):
-    nw = CombinedHumanCovidNetworkLoader(r"D:\data\networks\H_sapiens_aug_2020.net",
-                                         r"D:\data\networks\krogan_cov_to_human.cx",
-                                         r"D:\data\other\symbol_to_entrezgene.json",
-                                         merge_covid=False).load()
-
-    cov_interactors = get_covid_interactors(nw)
-    boring_old_conf = ConfigModel.parse_file(r"D:\configurations\stefan1\stefan_conf_backup.json")
-    all_nodes = [{"id": n, "source_of": ["info"]} for n in cov_interactors]
-
-    subgroups = [sample(all_nodes, group_size) for _ in range(num_groups)]
-    Path.mkdir(Path(f"D:\\configurations\\stefan1\\random_subgroups\\{group_size}"), exist_ok=True, parents=True)
-    for subgroups_num, subgroup in enumerate(subgroups):
-        chunks = [list(subgroup[ceil(len(subgroup) * i / 5):ceil(len(subgroup) * (i + 1) / 5)]) for i in range(5)]
-        chunks = [[n["id"] for n in chunk] for chunk in chunks]
-        boring_old_conf.prior_set = []
-        for i, chunk in enumerate(chunks):
-            boring_old_conf.prior_set.append({
-                "nodes": [n for n in subgroup if n["id"] not in chunk],
-                "id": f"chunk_{i}_majority",
-                "confidence": confidence
-            })
-            boring_old_conf.prior_set.append({
-                "nodes": [n for n in subgroup if n["id"] in chunk],
-                "id": f"chunk_{i}_minority",
-                "confidence": 0.7
-            })
-
-        boring_old_conf.output_dir_path = f"D:\\data\\propagations\\stefan_cross_validation\\random_subgroups\\{group_size}\\{subgroups_num}"
-        Path.mkdir(Path(boring_old_conf.output_dir_path), exist_ok=True, parents=True)
-        with open(f"D:\\configurations\\stefan1\\random_subgroups\\{group_size}\\stefan_rand_conf_{subgroups_num}.json",'w') as handler:
-            json.dump(boring_old_conf.dict(exclude_unset=True), handler, indent=4)
-
-
-
-# construct a prior set where each covid interactor propagates a unique liquid
-def individual_cov_interactors_prior_set(confidence=0.7):
-    nw = CombinedHumanCovidNetworkLoader(r"D:\data\networks\H_sapiens_aug_2020.net",
-                                         r"D:\data\networks\krogan_cov_to_human.cx",
-                                         r"D:\data\other\symbol_to_entrezgene.json").load()
-
-    cov_interactors = get_covid_interactors(nw)
-
-    boring_old_conf = ConfigModel.parse_file(r"D:\configurations\stefan1\stefan_conf_backup.json")
-    boring_old_conf.prior_set = [
-        {
-            "nodes": [{"id": n, "source_of": [n]} for n in cov_interactors],
-            "id": "covid_interactors",
-            "confidence": confidence
-        }
-    ]
-    boring_old_conf.output_dir_path = f"D:\\data\\propagations\\stefan_unique_liquids"
-    with open(f"D:\\configurations\\stefan1\\stefan_conf.json", 'w') as handler:
-        json.dump(boring_old_conf.dict(exclude_unset=True), handler, indent=4)
-
-def propagate_stefan():
-    propagate_from_config(r"D:\configurations\stefan1\stefan_conf.json", ordering={"prior_set": 100})
-
-
-def stefan_propagations(conf_files: list[str]):
-    for file in conf_files:
-        print(f"propagating {file}")
-        propagate_from_config(str(file), ordering={"prior_set": 100}, max_processes=7   )
-
-
-def intersect_top_propagated(results: list[str], k: int=50, output_file: str=None):
-    sorted_results = sorted(results)    #alphabatical sorting would place the files as minor-major all the way
-    majorities = sorted_results[::2]
-    minorities = sorted_results[1::2]
-    names = [res.split("\\")[-1].split("_majority")[0] for res in majorities]
-    res_dict = dict()
-    for i in range(len(majorities)):
-        major_res = PropagationResultModel.parse_file(majorities[i])
-        major_res_top_propagated = sorted([n for n in major_res.nodes.keys()], key=lambda n: major_res.nodes[n].liquids["info"], reverse=True)[:k]
-        minor_res = PropagationResultModel.parse_file(minorities[i])
-        minor_res_top_propagated = sorted([n for n in minor_res.nodes.keys()], key=lambda n: minor_res.nodes[n].liquids["info"], reverse=True)[:k]
-        intersection = set(major_res_top_propagated) & set(minor_res_top_propagated)
-        if len(intersection)/k > 0:
-            print(f"{names[i]}: {len(intersection)/k}")
-        res_dict[names[i]] = len(intersection)/k
-
-    if output_file:
-        with open(output_file, 'w') as handler:
-            json.dump(res_dict, handler, indent=4)
-
-
-def average_intersection(result_folders: list[str], k: int=50):
-    scores = []
-    for result_folder in result_folders:
-        files = sorted([str(f) for f in Path(result_folder).glob("*.json")]) #alphabatical sorting would place the files as minor-major all the way
-        majorities = files[::2]
-        minorities = files[1::2]
-        names = [res.split("\\")[-1].split("_majority")[0] for res in majorities]
-        for i in range(len(majorities)):
-            major_res = PropagationResultModel.parse_file(majorities[i])
-            major_res_top_propagated = sorted([n for n in major_res.nodes.keys()], key=lambda n: major_res.nodes[n].liquids["info"], reverse=True)[:k]
-            minor_res = PropagationResultModel.parse_file(minorities[i])
-            minor_res_top_propagated = sorted([n for n in minor_res.nodes.keys()], key=lambda n: minor_res.nodes[n].liquids["info"], reverse=True)[:k]
-            intersection = set(major_res_top_propagated) & set(minor_res_top_propagated)
-            scores.append(len(intersection)/k)
-
-    return scores
-
-
-def top_prop_by_source(res_file: str, k: int=50):
-    nodes = PropagationResultModel.parse_file(res_file).nodes
-    liquids = nodes['1'].liquids.keys()
-    return {
-        liquid: sorted([n for n in nodes.keys()], key=lambda n: nodes[n].liquids[liquid], reverse=True)[:k]
-        for liquid in liquids
-    }
-
-
-def most_intersected(dict_by_liquid: dict):
-    nodes = {}
-    for liquid, top_nodes in dict_by_liquid.items():
-        for node in top_nodes:
-            if node not in nodes:
-                nodes[node] = []
-            nodes[node].append(liquid)
-    return nodes
-
-
-def compare_results(res_1: str, res_2: str) -> bool:
-    res_1_nodes = PropagationResultModel.parse_file(res_1).nodes
-    res_2_nodes = PropagationResultModel.parse_file(res_2).nodes
-    from math import fabs
-    diffs = []
-    counters = {"normal": 0, "weird": 0}
-    for node, data in res_1_nodes.items():
-        score_1, score_2 = data.liquids["info"], res_2_nodes[node].liquids["info"]
-
-        if min(score_1, score_2) == 0:
-            deviation = max(score_1, score_2)
-            counters["weird"] += 1
-        else:
-            deviation = max(score_1, score_2) / min(score_1, score_2)
-            counters["normal"] += 1
-
-        #diffs.append(fabs(score_1- score_2)/max(score_1, score_2))
-        diffs.append(deviation)
-    print(f"max: {max(diffs)}\navg: {sum(diffs)/len(diffs)}")
-    print(len([d for d in diffs if d < 1]))
-
-
-# def validate_statistical_significance()
-
-
-def more_detailed_intersection_data(results: list[str], k: int=50, output_file: str=None):
-    sorted_results = sorted(results)    #alphabatical sorting would place the files as minor-major all the way
-    majorities = sorted_results[::2]
-    minorities = sorted_results[1::2]
-    names = [res.split("\\")[-1].split("_majority")[0] for res in majorities]
-    res_dict = {"chunks": dict(), "proteins": dict()}
-    all_intersections = set()
-    for i in range(len(majorities)):
-        major_res = PropagationResultModel.parse_file(majorities[i])
-        major_res_top_propagated = sorted([n for n in major_res.nodes.keys()], key=lambda n: major_res.nodes[n].liquids["info"], reverse=True)[:k]
-        minor_res = PropagationResultModel.parse_file(minorities[i])
-        minor_res_top_propagated = sorted([n for n in minor_res.nodes.keys()], key=lambda n: minor_res.nodes[n].liquids["info"], reverse=True)[:k]
-        intersection = set(major_res_top_propagated) & set(minor_res_top_propagated)
-        if len(intersection)/k > 0:
-            print(f"{names[i]}: {len(intersection)/k}")
-        res_dict["chunks"][names[i]] = {"size": len(intersection)/k, "intersecting_proteins": list(intersection)}
-        all_intersections = all_intersections.union(intersection)
-
-    res_dict["proteins"] = {
-        p: len([1 for chunk in res_dict["chunks"].values() if p in chunk["intersecting_proteins"]]) for p in all_intersections
-    }
-
-    if output_file:
-        with open(output_file, 'w') as handler:
-            json.dump(res_dict, handler, indent=4)
+from metrics.roc_auc import *
+from crispr import get_huh_crispr
+from scripts.divide_and_conquer import split_to_randomized_component, merge_results_as_different_liquids, get_nodes_in_intersection, intersect_crispr_ko_with_node_intersections
 
 
 
@@ -331,28 +27,64 @@ if __name__ == "__main__":
     # df = pd.DataFrame({"node": ["CHD6", "MBPTS2", "ACE2", "VAC14", "EXOC2"], "score": [0.86, 0.85, 0.63, 0.57, 0.52]})
     # print(df)
 
-    huh_7_nw = NetpropNetwork(r"D:\data\networks\metastudy\complete_networks\huh7_only_fixed.json").load()
-    base_conf = r"C:\studies\thesis\code\cicd\data_cache\metastudy_conf.json"
-    new_conf = r"C:\studies\thesis\code\cicd\data_cache\metastudy_all_interactors_conf.json"
-    prop_output_dir = "/output/props/all_interactors"
-    cov_interactors_prior_set(huh_7_nw, base_conf, new_conf, prop_output_dir=prop_output_dir)
+    # from netprop.networks.loaders import CombinedHumanCovidNetworkLoader
+    # krogan_nw = CombinedHumanCovidNetworkLoader(r"D:\data\networks\H_sapiens_aug_2020.net", r"D:\data\networks\krogan_cov_to_human.cx", r"D:\data\other\symbol_to_entrezgene.json", merge_covid=False).load()
+    # #huh_7_nw = NetpropNetwork(r"D:\data\networks\metastudy\complete_networks\huh7_only_fixed.json").load()
+    # base_conf = r"C:\studies\thesis\code\cicd\data_cache\metastudy_conf.json"
+    # new_conf_separated = r"C:\studies\thesis\code\cicd\data_cache\krogan_separated_all_interactors_conf.json"
+    # new_conf_merged = r"C:\studies\thesis\code\cicd\data_cache\krogan_merged_all_interactors_conf.json"
+    # prop_output_dir_separated = "/output/props/krogan_all_interactors_seperated"
+    # prop_output_dir_merged = "/output/props/krogan_all_interactors_merged"
+    # cov_interactors_prior_set(krogan_nw, base_conf, new_conf_separated, prop_output_dir=prop_output_dir_separated)
+    # cov_interactors_prior_set(krogan_nw, base_conf, new_conf_merged, prop_output_dir=prop_output_dir_merged, merge_sources=True)
+    # merge_sources: bool = False
 
     # df = pd.read_csv(r"D:\data\networks\metastudy\protein_interactome_translated.csv")
     # df["Bait"] = df["Bait"].apply(lambda name: name.upper())
     # df.to_csv(r"D:\data\networks\metastudy\protein_interactome_translated_upper_case.csv")
 
+    #
+    # m = NormsROC(prop_file_path=r"D:\data\propagations\krogan_interactors\specific_proteins\all_together.json",
+    #              by_liquids=None,
+    #              hit_set_load_method=get_huh_crispr)
+    # # m = SinglePropROC(prop_file_path=r"D:\data\propagations\krogan_interactors\merged\all.json",
+    # #                   by_liquids=None,
+    # #                   hit_set_load_method=get_huh_crispr)
+    # m.load_hit_set(r"D:\data\other\huh7_crispr_translated.csv")
+    # res = m.calc_metric()
+    # # res.to_csv("temp.json")
+    # m.show_results(res)
 
+    # merge_results_as_different_liquids(list(Path(r"D:\data\propagations\krogan_interactors\specific_proteins").glob("*")), r"D:\data\propagations\krogan_interactors\specific_proteins\all_together")
 
+    # multi_prior_set_conf = r"C:\studies\thesis\code\cicd\data_cache\krogan_separated_all_interactors_conf.json"
+    # output_dir = r"D:\configurations\krogan_split_interactors"
+    # max_splits_per_component = 20
+    # split_to_randomized_component(multi_prior_set_conf, output_dir, max_splits_per_component, override_conf_out_path=r"D:\data\propagations\metastudy_split_interactors")
 
+    # files = Path(r"D:\configurations\krogan_split_interactors").glob("*.json")
+    # for f in files:
+    #     protein = str(f.name).split("_")[0]
+    #     with open(str(f), 'r') as handler:
+    #         d = json.load(handler)
+    #     d.pop("norm")
+    #     d.pop("norm_kwargs")
+    #
+    #     with open(str(f), "w") as handler:
+    #         json.dump(d, handler, indent=4)
 
+    # glob_list = [Path(f).glob("*.json") for f in Path(r"D:\data\propagations\krogan_split_interactors").glob("*")]
+    # intersection_dicts = []
+    # for folder_files in glob_list:
+    #     print(f"now handling folder {len(intersection_dicts)}")
+    #     intersection_dicts.append(get_nodes_in_intersection([str(f) for f in folder_files], k=200))
+    #
+    # with open("intersection_dicts_top_200", "w") as handler:
+    #     json.dump(intersection_dicts, handler, indent=4)
 
-
-
-
-
-
-
-
+    with open("intersection_dicts_top_50", "r") as handler:
+        intersection_dicts = json.load(handler)
+    print(intersect_crispr_ko_with_node_intersections(r"D:\data\other\huh7_crispr_translated.csv", intersection_dicts))
 
 
 
@@ -522,5 +254,6 @@ if __name__ == "__main__":
     #                                r"D:\data\networks\metastudy\rna_interactome_translated.csv",
     #                                rna_cell_lines=["HUH7", "HUH7.5"], protein_cell_lines="all", min_num_studies=2).load()
     # NetpropNetwork.record_network(fixed_huh7_nw,  r"D:\data\networks\metastudy\huh7_only_fixed.json")
+
 
 

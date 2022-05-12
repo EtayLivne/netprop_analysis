@@ -55,12 +55,12 @@ def scores_iter(ref_file: str, tested_files: list[str],
         yield propagation_diff_to_df(ref, test, liquid_name=liquid_name, sort=sort)
 
 
-def propagation_to_df(propagation: Union[PropagationResultModel, str], by_liquid: str="info", drop_na=True):
-    return propagations_to_df([propagation], by_liquid=by_liquid, drop_na=drop_na)
+def propagation_to_df(propagation: Union[PropagationResultModel, str], by_liquids: list[str], drop_na=True):
+    return propagations_to_df([propagation], by_liquids=by_liquids, drop_na=drop_na)
 
 
 # When propagation is sorted, nodes with higher liquids will be first (order is descending)
-def propagations_to_df(propagations: Union[list[PropagationResultModel], list[str]], by_liquid: str="info", drop_na=True):
+def propagations_to_df(propagations: Union[list[PropagationResultModel], list[str]], by_liquids: list["str"], drop_na=True):
 
     # if given list of file paths, convert to list of PropagationResultModels
     if isinstance(propagations[0], str):
@@ -70,7 +70,7 @@ def propagations_to_df(propagations: Union[list[PropagationResultModel], list[st
         props = propagations
 
     how = "inner" if drop_na else "outer"
-    dfs = [p.prop_scroes_as_series(by_liquids=by_liquid) for p in props]
+    dfs = [p.prop_scroes_as_series(by_liquids=by_liquids) for p in props]
     df = reduce(lambda df1, df2: pd.merge(df1, df2, on='nodes', how=how), dfs)
     return df
 
