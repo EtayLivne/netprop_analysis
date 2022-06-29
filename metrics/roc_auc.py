@@ -27,6 +27,7 @@ class SinglePropROC(SinglePropMetric):
         elif self._prop_df.empty:
             raise MetricRuntimeError("cannot measure roc before prop results are defined! (call prop_data_to_df")
 
+        self._prop_df[self._NODES_COLUMN_NAME] = self._prop_df[self._NODES_COLUMN_NAME].apply(str)
         self._hit_set = [h for h in self._hit_set if h in list(self._prop_df[self._NODES_COLUMN_NAME])]
         results = dict()
         for c in self._prop_df.columns:
@@ -56,7 +57,7 @@ class SinglePropROC(SinglePropMetric):
             fig, axes = plt.subplots(nrows=lines, ncols=cols)
         axes_shape = axes.shape
         axes = axes.flatten()
-        fig.suptitle("ROC AUC: Krogan PPI, protein specific interactors interactors")
+        fig.suptitle("ROC AUC: Krogan PPI, protein specific interactors interactors", fontsize="small")
         counter = 0
         for liq, data in results.items():
             df, auc = data
@@ -64,12 +65,18 @@ class SinglePropROC(SinglePropMetric):
             x,y = df["fpr"], df["tpr"]
             ax.plot(x, y)
             ax.set_title(liq)
-            ax.set_xlabel("fpr")
-            ax.set_ylabel("tpr")
+            # ax.set_xlabel("fpr")
+            # ax.set_ylabel("tpr")
+            ax.set_xticks([], [])
+            ax.set_yticks([], [])
             ax.annotate(f'auc: {auc:.4f}', xy=(0.25, 0.1), xycoords='axes fraction')
             counter += 1
         axes = axes.reshape(axes_shape)
+        axes = axes[:-1]
+        plt.figtext(0.05 , 0.5, "tpr", rotation=90)
+        plt.figtext(0.5, 0.05, "fpr")
         if show:
+            plt.subplot_tool()
             plt.show()
         if save is not None:
             plt.savefig(save)

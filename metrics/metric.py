@@ -27,14 +27,31 @@ class SinglePropMetric(Metric):
             self.prop_data_to_df(prop_file_path, by_liquids)
 
     def prop_data_to_df(self, prop_file_path: str, by_liquids: list[str]):
-        res = PropagationResultModel.parse_file(prop_file_path)
-        self._prop_data_to_df(res, by_liquids=by_liquids)
+        # res = PropagationResultModelationResultModel.parse_file(prop_file_path)
+        self._prop_data_to_df(prop_file_path, by_liquids=by_liquids)
 
     def _prop_data_to_df(self, res: Union[PropagationResultModel, str], by_liquids: list[str]):
-        if type(res) is str:
-            res = PropagationResultModel.parse_file(res)
+        if by_liquids is not None and not isinstance(by_liquids, list):
+            by_liquids = [by_liquids]
 
-        self._prop_df = res.prop_scores_as_series(by_liquids=by_liquids)
+        if type(res) is str:
+            extension = res.split(".")[-1]
+            if extension == "json":
+                res = PropagationResultModel.parse_file(res)
+                self._prop_df = res.prop_scores_as_series(by_liquids=by_liquids)
+            elif extension == "csv":
+                self._prop_df = pd.read_csv(res, usecols=by_liquids)
+            else:
+                raise ValueError(f"cannot load prop dataframe from unknown file type {extension}")
+
+        elif isinstance(res, PropagationResultModel):
+            self._prop_df = res.prop_scores_as_series(by_liquids=by_liquids)
+
+        elif isinstance(res, pd.DataFrame):
+            self._prop_df = res
+
+        else:
+            raise ValueError("can only load dataframe from a file or from a PropagationResultModel.")
 
     @abstractmethod
     def calc_metric(self):
