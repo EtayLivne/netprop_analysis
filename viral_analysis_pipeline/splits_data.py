@@ -143,8 +143,8 @@ def generate_intersection_data(metadata_file: str, res_file: str, output_root: s
     intersections_output_dir.mkdir(exist_ok=True)
 
     split_types = [
-        # (inter_output_dir, partial(_randomly_split, metadata_file, None), "inter"),
-        # (cross_output_dir, partial(random_cross_proteins_splits, res_file, metadata_file), "cross"),
+        (inter_output_dir, partial(_randomly_split, metadata_file, None), "inter"),
+        (cross_output_dir, partial(random_cross_proteins_splits, res_file, metadata_file), "cross"),
         (by_size_output_dir, partial(split_by_size, res_file, [10, 15, 20, 30, 40]), "by_size"),
         (all_interactors_output_dir, partial(_randomly_split, metadata_file, ["all"]), "all")
     ]

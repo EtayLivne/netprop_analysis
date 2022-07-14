@@ -4,8 +4,8 @@ from pathlib import Path
 from netprop.propagation.api import propagate_from_config
 import pandas as pd
 
-def create_metadata_file(prior_set_source: str, metadata_file_path: str) -> None:
-    interactors_series = pd.read_csv(prior_set_source, index_col="Bait")["entrez"]
+def create_metadata_file(prior_set_source: str, metadata_file_path: str, prior_set_col: str="entrez", index_col: str="Bait") -> None:
+    interactors_series = pd.read_csv(prior_set_source, index_col=index_col)[prior_set_col].dropna().astype(int)
     dict_of_lists = dict()
     for item in interactors_series.iteritems():
         viral_protein, interactor = item[0], item[1]
@@ -46,7 +46,7 @@ def prop_from_conf_and_save_new_format(conf_path: str):
     output_dir_path = conf.output_dir_path
     res_json_path = Path(output_dir_path) / "all.json"
     res_csv_path = Path(output_dir_path) / "all.csv"
-    propagate_from_config(conf_path, ordering={"prior_set":100})
+    propagate_from_config(conf_path, ordering={"prior_set": 100})
     _prop_result_to_big_ass_df(res_json_path, res_csv_path)
     return res_csv_path
 

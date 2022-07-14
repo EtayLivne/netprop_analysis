@@ -33,9 +33,8 @@ def _merge_split_results(folder: str, file_name_pattern: str=None) -> tuple[list
     return all_nodes, all_values
 
 
-
-
-def visualize_intersection_statistics(root_folder: str, t_values: list[int]):
+def visualize_intersection_statistics(root_folder: str, t_values: list[int], suptitle: str,
+                                      save_to: str=None, show_image: bool=True):
     root = Path(root_folder)
     folders = list(root.glob("*"))
     th_values = {v: [[] for i in range(10)] for v in t_values}
@@ -73,9 +72,11 @@ def visualize_intersection_statistics(root_folder: str, t_values: list[int]):
             ax.set_xlabel("appearance in % of all intersections")
         ax.set_ylabel("num of nodes")
     
-    plt.suptitle("SARS COV 1: Frequency of a node appearing in multiple intersections")
-    plt.show()
-
+    plt.suptitle(suptitle)
+    if show_image:
+        plt.show()
+    if save_to:
+        plt.savefig(save_to)
 
 
 def visualize_intersection_crispr_prediction(root_folder: str, th_values: list[int], crispr_path: str):
@@ -96,7 +97,6 @@ def visualize_intersection_crispr_prediction(root_folder: str, th_values: list[i
         print(f"{t}: {hits_array}")
 
 
-
 def visualize_correlation(corr_files: list[str], corr_type):
     proteins = dict()
     for f in corr_files:
@@ -115,9 +115,6 @@ def visualize_correlation(corr_files: list[str], corr_type):
     plt.title("cross protein pairwise correlation values in real network")
     plt.ylabel("spearman correlation")
     plt.show()
-
-
-
 
 
 # TEMPORARY LOCATION MOVE TO DIVIDE&CONQUER2!
@@ -154,12 +151,22 @@ if __name__ == "__main__":
     # SARS cov 1 visualization
     cov1_root = Path(r"D:\data\propagations\sars_cov_1_individual_interactors\intersections_data\intersection_results")
     cov1_inter_root = str(cov1_root / "inter")
-    cov1_size_root = str(cov1_root / "by_size")
 
+    #vep c visualization
+    hep_c_root = Path(r"D:\data\propagations\hep_c_individual_interactors\intersections_data\intersection_results")
+    hep_c_inter_root = str(hep_c_root / "inter")
+    hep_c_size_root = str(hep_c_root / "by_size")
+    # hep_c_size_root = str(hep_c_root / "by_size")
 
-    crispr_path =r"D:\data\other\huh7_crispr_translated.csv"
+    #influenza pra1a1v visualization
+    inf_pra1av_root = Path(r"D:\data\propagations\influenza_pra1av_individual_interactors\intersections_data\intersection_results")
+    inf_pra1av_inter_root = str(inf_pra1av_root / "inter")
+    inf_pra1av_size_root = str(inf_pra1av_root / "by_size")
+    # inf_pra1av_size_root = str(hep_c_root / "by_size")
 
-    visualize_intersection_statistics(cov1_size_root, th_values)
+    # crispr_path =r"D:\data\other\huh7_crispr_translated.csv"
+
+    visualize_intersection_statistics(inf_pra1av_inter_root, th_values)
 
 
 

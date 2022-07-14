@@ -5,8 +5,8 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 
 class AbstractPipeline:
-    def __init__(self):
-        self.attrs = dict()
+    def __init__(self, init_attrs: dict=None):
+        self.attrs = init_attrs or dict()
         self._steps = []
         self.steps = self._steps
 
@@ -33,6 +33,7 @@ class Pipeline(AbstractPipeline):
 
     def _execute_step(self, step):
         if isinstance(step, AbstractPipeline):
+            self.attrs.update({k: v for k, v in step.attrs.values() if k not in self.attrs})
             step.attrs = self.attrs
             step.execute()
         elif callable(step):
@@ -53,8 +54,8 @@ class NonRepeatingPipeline(Pipeline):
     _ATTARS__STATE_KEY = "attrs"
     _EXECUTION_STATE__STATE_KEY = "execution_state"
 
-    def __init__(self, state_suffix: str, reset_state: bool=False):
-        super().__init__()
+    def __init__(self, state_suffix: str, reset_state: bool=False, init_attrs: dict=None):
+        super().__init__(init_attrs=init_attrs)
         self._execution_state = []
         self._state_path = "_" + state_suffix + ".json"
         self._current_step_index = 0
