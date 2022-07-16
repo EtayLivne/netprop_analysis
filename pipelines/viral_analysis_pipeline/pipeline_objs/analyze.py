@@ -1,7 +1,7 @@
 from visulizations import visualize_intersection_statistics
-from viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
+from pipelines.viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
 from pathlib import Path
-from pipelines import NonRepeatingPipeline
+from pipeline import NonRepeatingPipeline
 
 
 def _visualize_intersection_statistics(attrs: dict):

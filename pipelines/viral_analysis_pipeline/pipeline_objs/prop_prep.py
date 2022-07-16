@@ -1,14 +1,13 @@
 import shutil
 from pathlib import Path
-from functools import partial
 
 import pandas as pd
 
 from netprop.models import ConfigModel
-from pipelines import NonRepeatingPipeline
-from viral_analysis_pipeline.prop_helpers import create_virus_base_conf, create_randomized_conf
+from pipeline import NonRepeatingPipeline
+from pipelines.viral_analysis_pipeline.prop_helpers import create_virus_base_conf, create_randomized_conf
 
-from viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
+from pipelines.viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
 
 
 def _prepare_root_dirs(attrs: dict):

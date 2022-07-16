@@ -1,6 +1,6 @@
-from pipelines import NonRepeatingPipeline
-from viral_analysis_pipeline.prop_helpers import prop_from_conf_and_save_new_format
-from viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
+from pipeline import NonRepeatingPipeline
+from pipelines.viral_analysis_pipeline.prop_helpers import prop_from_conf_and_save_new_format
+from pipelines.viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
 
 def _create_prop_from_config(attrs: dict):
     print("creating prop from config")
