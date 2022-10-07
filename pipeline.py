@@ -33,7 +33,7 @@ class Pipeline(AbstractPipeline):
 
     def _execute_step(self, step):
         if isinstance(step, AbstractPipeline):
-            self.attrs.update({k: v for k, v in step.attrs.values() if k not in self.attrs})
+            self.attrs.update({k: v for k, v in step.attrs.items() if k not in self.attrs})
             step.attrs = self.attrs
             step.execute()
         elif callable(step):
@@ -51,7 +51,7 @@ class Pipeline(AbstractPipeline):
 
 
 class NonRepeatingPipeline(Pipeline):
-    _ATTARS__STATE_KEY = "attrs"
+    _ATTRS__STATE_KEY = "attrs"
     _EXECUTION_STATE__STATE_KEY = "execution_state"
 
     def __init__(self, state_suffix: str, reset_state: bool=False, init_attrs: dict=None):
@@ -61,7 +61,7 @@ class NonRepeatingPipeline(Pipeline):
         self._current_step_index = 0
 
         if reset_state:
-            self.reset_state()
+            self.reset_state(init_attrs=init_attrs)
 
         if Path(self._state_path).exists():
             self.init_state()
@@ -100,7 +100,7 @@ class NonRepeatingPipeline(Pipeline):
             print(f"could  not load state from path {self._state_path}")
             raise file_read_exception
 
-        self.attrs = state_dict.get(self._ATTARS__STATE_KEY, dict())
+        self.attrs = state_dict.get(self._ATTRS__STATE_KEY, dict())
         self._execution_state = state_dict.get(self._EXECUTION_STATE__STATE_KEY, [])
 
     def record_state(self):
@@ -110,19 +110,20 @@ class NonRepeatingPipeline(Pipeline):
                 value = str(value)
             serializable_attrs[attr_name] = value
 
-        dump_json({self._ATTARS__STATE_KEY: serializable_attrs, self._EXECUTION_STATE__STATE_KEY: self._execution_state},
+        dump_json({self._ATTRS__STATE_KEY: serializable_attrs, self._EXECUTION_STATE__STATE_KEY: self._execution_state},
                   self._state_path)
 
-    def reset_state(self):
+    def reset_state(self, init_attrs: dict=None):
+        init_attrs = init_attrs or dict()
         Path(self._state_path).unlink(missing_ok=True)
         self._execution_state = []
         self._current_step_index = 0
         self._steps = []
-        self.attrs = dict()
+        self.attrs = init_attrs
 
 
-p1 = NonRepeatingPipeline("p1_state")
-p2 = NonRepeatingPipeline("p2_state", reset_state=True)
+# p1 = NonRepeatingPipeline("p1_state")
+# p2 = NonRepeatingPipeline("p2_state", reset_state=True)
 
 
 def add_key(key, attrs):
