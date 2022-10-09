@@ -11,7 +11,7 @@ def main() -> None:
     top_propagated_rank_threshold = 1000
     top_resilient_rank_threshold = 100
     run_name = "default"
-    
+
     run_once(individual_interactors_metadata, prop_results_file, resiliency_dir,
              ratios, min_subset_size, max_subset_size, top_propagated_rank_threshold, top_resilient_rank_threshold,
              run_name, reset_state=False)

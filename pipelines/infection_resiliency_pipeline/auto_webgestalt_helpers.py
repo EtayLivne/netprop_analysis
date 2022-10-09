@@ -36,15 +36,7 @@ def _submit_query(driver: webdriver.WebDriver) -> None:
     driver.switch_to.window(driver.window_handles[1])
 
 
-# def _download_query_result()
-
-
-def query_webgestalt(path_to_genes_list: str) -> None:
-    query_url = _build_query(path_to_genes_list)
-    driver = webdriver.Chrome(ChromeDriverManager().install())
-    driver.maximize_window()
-    driver.get(query_url)
-
+def _download_query_result(driver: webdriver.Webdriver) -> None:
     try:
         download = WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.XPATH, '//*[@id="app"]/div[2]/div/div[2]/div/a'))
@@ -56,6 +48,16 @@ def query_webgestalt(path_to_genes_list: str) -> None:
 
     download.click()
 
+
+def query_webgestalt(path_to_genes_list: str, download_path: str) -> None:
+
+    query_url = _build_query(path_to_genes_list)
+    chrome_options = webdriver.ChromeOptions()
+    prefs = {'download.default_directory': download_path}
+    chrome_options.add_experimental_option('prefs', prefs)
+    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
+    driver.maximize_window()
+    driver.get(query_url)
 
 
 # //*[contains(text(), 'Result Download')]

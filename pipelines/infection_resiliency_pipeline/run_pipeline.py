@@ -83,10 +83,10 @@ def run_once(individual_interactors_metadata: str, prop_results_file: str, resil
     # resiliency_dir = r"/data/resiliency"
     # individual_interactors_metadata = r"/data/propagations/krogan_interactors/individual_interactors/metadata.json"
     # prop_results_file = r"/data/propagations/krogan_interactors/individual_interactors/all.csv"
-    subsets_master_file_path = resiliency_dir + r"/subset_files/2.json"
-    generated_subsets_dir = resiliency_dir + r"/subset_files/2"
-    generated_resiliency_scores = resiliency_dir + r"/scores/2"
-    generated_top_ranking = resiliency_dir + r"/top_ranking/2"
+    subsets_master_file_path = resiliency_dir + f"/subset_files/{run_name}.json"
+    generated_subsets_dir = resiliency_dir + f"/subset_files/{run_name}"
+    generated_resiliency_scores = resiliency_dir + f"/scores/{run_name}"
+    generated_top_ranking = resiliency_dir + f"/top_ranking/{run_name}"
     # ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     # min_subset_size = 5
     # max_subset_size = 20
