@@ -25,7 +25,7 @@ def load_dfs(root_path: str) -> list[pd.DataFrame]:
 
 def top_intersected(index_sets: list[set]) -> dict:
     all_indexes = reduce(lambda a, b: a | b, index_sets)
-    return {idx: len([_ for idx_set in index_sets if idx in idx_set]) for idx in all_indexes}
+    return {idx: len([1 for idx_set in index_sets if idx in idx_set]) for idx in all_indexes}
 
 
 def normalize_and_threshold_score_dict(score_dict: dict[int, int], norm_factor: int, threshold: float=0.3):

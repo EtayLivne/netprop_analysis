@@ -6,11 +6,13 @@ import numpy as np
 import pandas as pd
 
 
-def _get_whitelist(df: pd.DataFrame, rank_by: str=None, threshold: int=1000) -> pd.Series:    # Returns the indexes of the values not to be discarded
+def _get_whitelist(df: pd.DataFrame, rank_by: str=None, threshold: int=1000) -> list:    # Returns the indexes of the values not to be discarded
     if rank_by is None:
+        print("rankin by nothin")
         df = df.sort_index()
     else:
         try:
+            print(f"ranking by {rank_by}")
             df = df.sort_values(rank_by, ascending=True)    #ascending = true because sorting by rank
         except KeyError:
             raise ValueError(f"cannot filter by rank of {rank_by} because df does not have this column")
@@ -19,8 +21,20 @@ def _get_whitelist(df: pd.DataFrame, rank_by: str=None, threshold: int=1000) -> 
 
 def _column_concat_average_dist_from_reference(dfs: list[pd.DataFrame], reference_df: pd.DataFrame, protein: str) -> pd.DataFrame:
     avg = "__average__"
+    abs_avg = "__abs_average__"
+    nodes = set(reference_df.index)
+    print(f"*** {protein} with reference df {reference_df.name}***")
 
-    indexed_reference = reference_df.set_index("nodes")
+    # for df in dfs:
+    #     filtered_df_idx = set(df.index)
+    #     print(f"{df.name}: {len(filtered_df_idx - nodes)} / {len(filtered_df_idx - nodes)}")
+    # indexed_reference = reference_df.set_index("nodes")
+    # indexes = set(indexed_reference.index)
+    # print(f"*** {protein} with reference df {reference_df.name}***")
+    # for df in dfs:
+    #     nodes = set(df["nodes"])
+    #     print(f"{df.name}: {len(indexes - nodes)} / {len(nodes - indexes)} / {len(df) == 1000} / {1 in nodes}")
+
     try:
         for df in dfs:
             try:
@@ -34,12 +48,13 @@ def _column_concat_average_dist_from_reference(dfs: list[pd.DataFrame], referenc
                 This number might be interesting 
                 For each
                 """
-                df[avg] = df.apply(lambda row: int((row - indexed_reference.loc[row["nodes"]][protein]).mean()), axis=1)
-            except:
-                print(f"{protein} why yo bein a nigga")
-            # print(df.name)
-            # print(df[df.nodes == 408])
-            # print(indexed_reference.loc[408])
+                df[avg] = df.apply(lambda row: int((row - reference_df.loc[row["nodes"]][protein]).mean()), axis=1)
+                # df[abs_avg] = df.apply(lambda row: int((row - reference_df.loc[row["nodes"]][protein]).abs().mean()), axis=1)
+            except Exception as e:
+                print(df.name)
+                print(df.loc)
+                print(reference_df.loc[1])
+                raise e
         res_dict = {"nodes": dfs[0]["nodes"]}
         res_dict.update({df.name: df[avg] for df in dfs})
         res_df = pd.DataFrame(res_dict)
@@ -61,23 +76,32 @@ def _sort_by_average_diff(df: pd.DataFrame) -> pd.DataFrame:
 
 def single_protein_sorted_df(prop_df: pd.DataFrame, knockout_dfs: list[pd.DataFrame], protein: str,
                              top_propagated_threshold: int) -> pd.DataFrame:
-
+    prop_df = prop_df.set_index("nodes",)
     whitelist = _get_whitelist(prop_df, rank_by=protein, threshold=top_propagated_threshold)
+    # whitelist_set = set(whitelist)    # For debug only
+
     filtered_dfs = []   # dfs where only proteins that rank high in original propagation are retained
     for df in knockout_dfs:
-        filtered_df = df.loc[whitelist]
-        filtered_df.name = df.name
-        filtered_dfs.append(filtered_df)
 
+        indexed_df = df.set_index("nodes", drop=False)
+        filtered_df = indexed_df.loc[whitelist]
+        filtered_df.name = df.name
+
+        filtered_dfs.append(filtered_df)
     # TODO IS'nt all this just re-discovering the whitelist? I', like 90% sure that it is [NO IT ISNT BECAUSE THE INDEX IS NOT THE SAME AS THE PROPAGATION RANKING
-    node_mask = list(filtered_dfs[0]["nodes"])
+    node_mask = list(filtered_dfs[0].index)
     idxs = []
     for tup in prop_df.itertuples():
-        if tup.nodes in node_mask:
+        if tup.Index in node_mask:
             idxs.append(tup.Index)  # the index
-
     masked_prop_df = prop_df.loc[idxs]
     masked_prop_df.name = protein
+
+    # counter = 0
+    # for df in filtered_dfs:
+    #     filtered_df_idx = set(df.index)
+    #     masked_nodes = set(masked_prop_df.index)
+    #     print(f"{df.name}: {len(filtered_df_idx - whitelist_set)} / {len(filtered_df_idx - whitelist_set)} / {len(filtered_df_idx - masked_nodes)} / {len(masked_nodes - filtered_df_idx)}")
 
     averaged_df = _column_concat_average_dist_from_reference(filtered_dfs, masked_prop_df, protein)
     sorted_df = _sort_by_average_diff(averaged_df)
@@ -115,8 +139,8 @@ def sort_per_protein(top_propagated_threshold,
     folder_names = [p.name for p in folder_paths]
     unmatched_proteins = (set(proteins) | set(folder_names)) - (set(proteins) & set(folder_names))
     if unmatched_proteins:
-        raise ValueError(f"The following proteins are missing from folders or df: {unmatched_proteins}")
-        print("no worries")
+        # raise ValueError(f"The following proteins are missing from folders or df: {unmatched_proteins}")
+        print(f"no worries! {proteins} are here!")
     with Pool(min(len(proteins), 2*cpu_count())) as p:
         result_dfs = p.map(_worker, zip(repeat(top_propagated_threshold), repeat(prop_res_file), folder_paths))
     for result_df in result_dfs:
@@ -124,11 +148,14 @@ def sort_per_protein(top_propagated_threshold,
     return result_dfs
 
 
-def resiliency_scores(prop_res_file: str, knockout_res_folders: list[str], output_root: str) -> None:
-    result_dfs = sort_per_protein(prop_res_file, knockout_res_folders)
+def resiliency_scores(top_propagated_threshold: int,
+                      prop_res_file: str, knockout_res_folders: list[str], output_root: str) -> None:
+    result_dfs = sort_per_protein(top_propagated_threshold, prop_res_file, knockout_res_folders)
     root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
     for result_df in result_dfs:
-        result_file_path = root / result_df.name
+        filename = result_df.name + ".csv"
+        result_file_path = root / filename
         result_df.to_csv(result_file_path, index=False)
 
 
@@ -142,6 +169,7 @@ def test_resiliency_scores(top_propagated_threshold: int,
     # knockout_res_folders_root =  r"C:\studies\thesis\code\netprop_analysis\pipelines\infection_resiliency_pipeline\pipeline_objs\temp_outputs2"
     knockout_res_folders = [str(f) for f in Path(knockout_res_folders_root).glob("*")]
     resiliency_scores(top_propagated_threshold, prop_res_file, knockout_res_folders, output_root)
+
 
 if __name__ == "__main__":
     test_resiliency_scores()

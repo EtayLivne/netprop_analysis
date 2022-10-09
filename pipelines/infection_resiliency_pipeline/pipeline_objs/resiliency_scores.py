@@ -25,7 +25,7 @@ def get_pipeline(top_propagated_threshold,
     resiliency_scores_pipeline = NonRepeatingPipeline(suffix, init_attrs=init_attrs, reset_state=reset_state)
     resiliency_scores_pipeline.add_steps(
         [
-            test_resiliency_scores
+            gen_resiliency_scores
         ]
     )
 

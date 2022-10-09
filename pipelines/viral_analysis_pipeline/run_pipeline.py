@@ -76,6 +76,11 @@ if __name__ == "__main__":
     #                    r"D:\configurations\krogan_invidual_interactors\krogan_individual_interactors_conf.json",
     #                    r"D:\data\networks\virus_to_human\hep_c_host_protein_interactome_translated_without_nonexsiting.csv", reset_states=True)
 
+
+
+
+
+    exit()
     run_virus_pipeline("influenza_pra1av",
                        r"D:\configurations\krogan_invidual_interactors\krogan_individual_interactors_conf.json",
                        r"D:\data\networks\virus_to_human\pr81av_host_protein_interactome_translated.csv", reset_states=True)

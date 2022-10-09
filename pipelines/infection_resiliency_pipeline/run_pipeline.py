@@ -1,3 +1,4 @@
+
 from pipeline import NonRepeatingPipeline
 from pipelines.infection_resiliency_pipeline.pipeline_objs import select_subsets, resiliency_scores, score_analysis
 
@@ -60,16 +61,18 @@ def compose_pipeline(individual_interactors_metadata: str,
     global_pipeline.add_steps(
         [
             select_subsets_piepline,
-            # resiliency_scores_pipeline,
-            # score_analysis_pipeline
+            resiliency_scores_pipeline,
+            score_analysis_pipeline
         ]
     )
 
     return global_pipeline
 
 
-
-def main():
+def run_once(individual_interactors_metadata: str, prop_results_file: str, resiliency_dir: str,
+             ratios: list[float], min_subset_size: int, max_subset_size: int,
+             top_propagated_rank_threshold: int, top_resilient_rank_threshold: int,
+             run_name: str, reset_state: bool=False):
     # resiliency_dir = "/data/resiliency"
     # individual_interactors_metadata = "/data/propagations/krogan_interactors/individual_interactors/metadata.json"
     # prop_results_file = "/data/propagations/krogan_interactors/individual_interactors/all.csv"
@@ -77,21 +80,27 @@ def main():
     # generated_subsets_dir = resiliency_dir + "/subset_files/1"
     # generated_resiliency_scores = resiliency_dir + "/scores/1"
     # generated_top_ranking = resiliency_dir + "/top_ranking/1"
-    resiliency_dir = r"D:\data\resiliency"
-    individual_interactors_metadata = r"D:\data\propagations\krogan_interactors\individual_interactors\metadata.json"
-    prop_results_file = r"D:\data\propagations\krogan_interactors\individual_interactors\all.csv"
-    subsets_master_file_path = resiliency_dir + r"\subset_files\1.json"
-    generated_subsets_dir = resiliency_dir + r"\subset_files\1"
-    generated_resiliency_scores = resiliency_dir + r"\scores\1"
-    generated_top_ranking = resiliency_dir + r"\top_ranking\1"
-    ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-    min_subset_size = 5
-    max_subset_size = 20
-    top_propagated_rank_threshold = 1000
-    top_resilient_rank_threshold = 100
-    run_name = "1"
-    reset_state = True
+    # resiliency_dir = r"/data/resiliency"
+    # individual_interactors_metadata = r"/data/propagations/krogan_interactors/individual_interactors/metadata.json"
+    # prop_results_file = r"/data/propagations/krogan_interactors/individual_interactors/all.csv"
+    subsets_master_file_path = resiliency_dir + r"/subset_files/2.json"
+    generated_subsets_dir = resiliency_dir + r"/subset_files/2"
+    generated_resiliency_scores = resiliency_dir + r"/scores/2"
+    generated_top_ranking = resiliency_dir + r"/top_ranking/2"
+    # ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
+    # min_subset_size = 5
+    # max_subset_size = 20
+    # top_propagated_rank_threshold = 1000
+    # top_resilient_rank_threshold = 100
+    # run_name = "2"
+    # reset_state = True
 
+    # from utils.utils import load_json, dump_json
+    # md = load_json(individual_interactors_metadata)
+    # dumb_md = {"e": md["e"], "m": md["m"]}
+    # dump_json(dumb_md, r"D:\data\propagations\krogan_interactors\individual_interactors\dummy_metadata_for_test.json")
+
+    # exit()
     pipeline = compose_pipeline(individual_interactors_metadata,
                                 prop_results_file,
                                 subsets_master_file_path,
@@ -107,5 +116,7 @@ def main():
                                 reset_state)
     pipeline.execute()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
+
+main()
