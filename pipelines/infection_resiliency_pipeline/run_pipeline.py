@@ -37,7 +37,7 @@ def compose_pipeline(individual_interactors_metadata: str,
                      top_resiliency_threshold: int,
                      descriptor: str,
                      reset_state: bool=False) -> NonRepeatingPipeline:
-
+    print("f1")
     select_subsets_piepline = select_subsets.get_pipeline(ratios,
                                                           min_subset_size,
                                                           max_subset_size,
@@ -47,15 +47,18 @@ def compose_pipeline(individual_interactors_metadata: str,
                                                           generated_subsets_dir,
                                                           descriptor,
                                                           reset_state=reset_state)
+    print("f2")
     resiliency_scores_pipeline = resiliency_scores.get_pipeline(top_prop_threshold,
                                                                 generated_resiliency_scores_dir,
                                                                 descriptor,
                                                                 reset_state=reset_state)
+    print("f3")
     score_analysis_pipeline = score_analysis.get_pipeline(top_resiliency_threshold,
                                                           generated_top_resilient_genes_path,
                                                           descriptor,
                                                           reset_state=reset_state)
 
+    print("f4")
     global_pipe_descriptor = descriptor + "_global_pipeline"
     global_pipeline = NonRepeatingPipeline(global_pipe_descriptor, reset_state=reset_state)
     global_pipeline.add_steps(
@@ -65,7 +68,15 @@ def compose_pipeline(individual_interactors_metadata: str,
             score_analysis_pipeline
         ]
     )
-
+    # global_pipeline.add_steps(
+    #     [
+    #         lambda attrs: print("l1"),
+    #         select_subsets_piepline,
+    #         lambda attrs: print("l2"),
+    #         lambda attrs: print("l3")
+    #     ]
+    # )
+    print("f5")
     return global_pipeline
 
 
@@ -101,6 +112,7 @@ def run_once(individual_interactors_metadata: str, prop_results_file: str, resil
     # dump_json(dumb_md, r"D:\data\propagations\krogan_interactors\individual_interactors\dummy_metadata_for_test.json")
 
     # exit()
+    print("composing pipeline")
     pipeline = compose_pipeline(individual_interactors_metadata,
                                 prop_results_file,
                                 subsets_master_file_path,
@@ -114,9 +126,12 @@ def run_once(individual_interactors_metadata: str, prop_results_file: str, resil
                                 top_resilient_rank_threshold,
                                 run_name,
                                 reset_state)
+    #
+    print("executing pipeline")
     pipeline.execute()
 
 # if __name__ == "__main__":
 #     main()
-
-main()
+# def quack():
+#     print("quack")
+# main()

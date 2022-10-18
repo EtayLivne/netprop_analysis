@@ -32,11 +32,14 @@ class Pipeline(AbstractPipeline):
             self.add_step(step)
 
     def _execute_step(self, step):
+        print("_exec_step 1")
         if isinstance(step, AbstractPipeline):
+            print("class step")
             self.attrs.update({k: v for k, v in step.attrs.items() if k not in self.attrs})
             step.attrs = self.attrs
             step.execute()
         elif callable(step):
+            print("func step")
             try:
                 step(self.attrs)
             except TypeError as err:
@@ -47,6 +50,7 @@ class Pipeline(AbstractPipeline):
 
     def execute(self):
         for step in self.steps:
+            print("executing step")
             self._execute_step(step)
 
 

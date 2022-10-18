@@ -12,8 +12,9 @@ def _gen_subsets_file(attrs: dict) -> None:
     ratios = attrs[RATIOS]
     min_subset_size = attrs[MIN_SUBSET_SIZE]
     max_subset_size = attrs[MAX_SUBSET_SIZE]
-
+    print("loading sets")
     sets = load_json(individual_interactors_metadata)
+    print("calcing subset file")
     subsets_file(sets, ratios, min_subset_size, max_subset_size, subsets_file_path)
 
 
@@ -21,7 +22,7 @@ def _gen_ranked_dfs_by_subset(attrs: dict) -> None:
     subsets_file_path = attrs[SUBSETS_FILE_PATH]
     prop_results_file = attrs[PROP_RESULTS_FILE]
     generated_subsets_dir = attrs[GENERATED_SUBSETS_DIR]
-
+    print("ranking by subset")
     rank_by_subset_df(subsets_file_path, prop_results_file, generated_subsets_dir)
 
 
