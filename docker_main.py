@@ -1,5 +1,5 @@
 # print("-1")
-from pipelines.infection_resiliency_pipeline.run_pipeline import run_once, quack
+from pipelines.infection_resiliency_pipeline.run_pipeline import run_once
 # from ray import remote, get
 # from threading import Thread
 # print(0)
@@ -42,9 +42,10 @@ from pipelines.infection_resiliency_pipeline.run_pipeline import run_once, quack
 def main() -> None:
     individual_interactors_metadata = "/data/metadata.json"
     prop_results_file = "/data/all.csv"
+    resiliency_dir = "/output"
     # individual_interactors_metadata = "/data/propagations/krogan_interactors/individual_interactors/metadata.json"
     # prop_results_file = "/data/propagations/krogan_interactors/individual_interactors/all.csv"
-    resiliency_dir = "/data/resiliency"
+    # resiliency_dir = "/data/resiliency"
     ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
     min_subset_size = 5
     max_subset_size = 30

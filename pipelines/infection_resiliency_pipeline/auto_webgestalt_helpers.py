@@ -1,13 +1,19 @@
+from time import sleep
+from typing import Union
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
-from time import sleep
+strings = Union[str, list[str]]
 
 
-
+def _listify(elm) -> list:
+    if isinstance(elm, list):
+        return elm
+    return [elm]
 
 
 def _build_query(path_to_genes_list: str):
@@ -49,15 +55,17 @@ def _download_query_result(driver: webdriver.Webdriver) -> None:
     download.click()
 
 
-def query_webgestalt(path_to_genes_list: str, download_path: str) -> None:
+def query_webgestalt(paths_to_genes_lists: strings, download_path_root: str) -> None:
 
-    query_url = _build_query(path_to_genes_list)
-    chrome_options = webdriver.ChromeOptions()
-    prefs = {'download.default_directory': download_path}
-    chrome_options.add_experimental_option('prefs', prefs)
-    driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
-    driver.maximize_window()
-    driver.get(query_url)
+    for gene_list_path in _listify(paths_to_genes_lists):
+
+        query_url = _build_query(paths_to_genes_lists)
+        chrome_options = webdriver.ChromeOptions()
+        prefs = {'download.default_directory': download_path}
+        chrome_options.add_experimental_option('prefs', prefs)
+        driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
+        driver.maximize_window()
+        driver.get(query_url)
 
 
 # //*[contains(text(), 'Result Download')]

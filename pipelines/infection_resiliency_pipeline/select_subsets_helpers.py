@@ -98,7 +98,6 @@ def _iter_subsets(subsets_file_path: str, output_dir: str) -> tuple:
                 continue
             if len(subsets) == 0:
                 raise ValueError("WHATTT")
-            print("WE DIDN'T JUST CONTINUE FOREVER")
             csv_path = str(set_output_dir/str(subset_ratio)) + ".csv"
             yield subsets, {_ACCUMULATOR_KWARGS__CSV_PATH_KEY: csv_path}
             counter += 1
@@ -126,9 +125,9 @@ def rank_by_subset_df(subsets_file_path: str, prop_res_file: str, output_dir: st
 
 
     mqm = MultiQueueManager(
-        5,
+        6,
         SubsetRanker,
-        num_workers // 5,
+        num_workers // 6,
         _results_to_ratio_df,
         worker_init_args=prop_res_file
     )

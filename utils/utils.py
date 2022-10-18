@@ -146,11 +146,11 @@ class MultiQueueManager(ABC):
             flag_num = (flag_num + 1) % len(self._availability_flags)
             sleep(1)
 
-    def _activate_single_queue(self, inputs, accumulator_func, queue_num):
+    def _activate_single_queue(self, inputs, accumulator_func, queue_num) -> Thread:
         try:
             lock = self._availability_flags[queue_num]
             q = self._queues[queue_num]
-            Thread(target=_activate_queue, args=(lock, q, inputs, accumulator_func)).start()
+            t = Thread(target=_activate_queue, args=(lock, q, inputs, accumulator_func)).start()
 
         finally:
             """
@@ -158,14 +158,21 @@ class MultiQueueManager(ABC):
             waiting on this. The thread will acquire lock again
             """
             lock.release()
+            return t
 
     def handle_inputs(self, input_iterator) -> None:
+        threads = []
         for inputs, accumulator_args in input_iterator:
             queue_num = self._get_available_queue()
             accumulator_func = partial(self._accumulator_func, **accumulator_args) #csv_path
-            self._activate_single_queue(inputs, accumulator_func, queue_num)
+            new_thread = self._activate_single_queue(inputs, accumulator_func, queue_num)
+            threads.append(new_thread)
+
 
         sleep(6)
+        for t in threads:
+            t.join()
+        print("joined all multi queue threads")
 
 # class MPQueueManager(QueueManager):
 #     def _init_queue(self):
