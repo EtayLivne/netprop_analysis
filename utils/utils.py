@@ -1,15 +1,13 @@
 import json
 from time import sleep
 from typing import Callable
-from threading import Lock, Thread
+from threading import Lock, Thread, Event
 from ray.util.queue import Queue as RayQueue
+from multiprocessing import Process, Manager
 from multiprocessing import Queue as MPQueue
-from ray import remote
-import pandas as pd
-import numpy as np
 from typing import Union
 from abc import ABC, abstractmethod
-from ray.util.queue import Queue, Empty
+from ray.util.queue import Empty as RayEmptyQueueException
 from functools import partial
 
 def load_json(file_path):
@@ -50,21 +48,24 @@ class QueueWorker:
                 self.output_queue.put(self._perform_task(task_input))
 
 
+def queue_worker_wrapper(worker_class: QueueWorker, task_queue: MPQueue, output_queue: MPQueue,
+                         start_event_proxy: Event, *worker_init_args):
+    obj = worker_class(task_queue, output_queue, *worker_init_args)
+    # start_event_proxy.wait()
+    obj.start()
+
+
 class QueueManager(ABC):
     def __init__(self, worker_class, num_workers: int, worker_init_args: Union[list, any]=None, use_ray: bool=True):
         if worker_init_args and not isinstance(worker_init_args, list):
             worker_init_args = [[worker_init_args]] * num_workers
         elif worker_init_args is None:
             worker_init_args = [[]] * num_workers
-        print("IIIIIIIIIIIIIII AMMMMMMMMMMMMM DONNNNNE 1")
         self.task_queue = self._init_queue()
         self.output_queue = self._init_queue()
         print(f"worker init args: {len(worker_init_args)}")
-        print("IIIIIIIIIIIIIII AMMMMMMMMMMMMM DONNNNNE 2")
         self.workers = self._init_workers(worker_class, worker_init_args)
-        print("IIIIIIIIIIIIIII AMMMMMMMMMMMMM  3")
         self._stop_task_queue_message = worker_class._STOP_TASK_QUEUE_MESSAGE
-        print("IIIIIIIIIIIIIII AMMMMMMMMMMMMM DONNNNNE 4")
 
     @abstractmethod
     def _init_queue(self):
@@ -114,10 +115,43 @@ class RayQueueManager(QueueManager):
             try:
                 output = self.output_queue.get()
                 break
-            except Empty:
-                pass
+            except RayEmptyQueueException:
+                sleep(0.05) # if no output wait a moment before checking again
         return output
 
+
+class PythonQueueManager(QueueManager):
+    def __init__(self, worker_class, num_workers: int, worker_init_args: Union[list, any] = None, use_ray: bool = True):
+        self._sync_manager = Manager()
+        self._shared_event = self._sync_manager.Event()
+        self._shared_event.clear()
+        super().__init__(worker_class, num_workers, worker_init_args=worker_init_args, use_ray=use_ray)
+
+    def _init_queue(self):
+        return MPQueue()
+
+    def _init_workers(self, worker_class, worker_init_args):
+        return \
+            [
+                Process(target=queue_worker_wrapper,
+                        args=(worker_class, self.task_queue, self.output_queue, *worker_args))
+                for worker_args in worker_init_args
+            ]
+
+    def _start_workers(self):
+        for worker in self.workers:
+            worker.start()
+
+    def _get_single_output(self):
+        while True:
+            try:
+                output = self.output_queue.get()
+                break
+            except Exception as e:  #couldn't find how to import the type of exception thrown by an empty queue so trying to catch other error implicitly 
+                if type(e) in [type(error) for error in (ValueError, KeyError, ZeroDivisionError, NameError, RuntimeError)]:
+                    raise e
+                sleep(0.05) # if no output wait a moment before checking again
+        return output
 
 def _activate_queue(lock: Lock, queue: QueueManager, inputs, accumulator_func: Callable):
 
