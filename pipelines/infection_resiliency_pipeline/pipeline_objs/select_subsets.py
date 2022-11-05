@@ -1,6 +1,6 @@
 import pandas as pd
 
-from utils.utils import load_json
+from utils.queue_managers import load_json
 from pipeline import NonRepeatingPipeline
 from pipelines.infection_resiliency_pipeline.attrs_keys import *
 from pipelines.infection_resiliency_pipeline.select_subsets_helpers import subsets_file, rank_by_subset_df

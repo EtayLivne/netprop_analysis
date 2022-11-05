@@ -1,6 +1,6 @@
 import re
 
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 import biomart
 import pandas as pd
 from typing import Union

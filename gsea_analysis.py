@@ -5,7 +5,7 @@ from scipy import stats
 from gsea.gsea_data import GSEAData
 from gsea.gsea_analysis import GSEAAnalysis, MultiprocessGSEAAnalysis
 
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 
 def crispr_scores_for_spearman(cripsr_scores_path: str, translation_path: str)-> pd.DataFrame:
     crispr_ranked_nodes = get_crispr_rankings(cripsr_scores_path, translation_path)

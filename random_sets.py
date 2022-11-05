@@ -1,6 +1,6 @@
 from netprop.networks.loaders import NetpropNetwork
 from netprop.models import ConfigModel
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from random import choice
 
 

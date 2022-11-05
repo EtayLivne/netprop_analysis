@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from gsea.gsea_data import GSEAData
-from utils.utils import dump_json
+from utils.queue_managers import dump_json
 
 
 class AbstractGSEAAnalysis(metaclass=ABCMeta):

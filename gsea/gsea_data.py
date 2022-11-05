@@ -1,5 +1,5 @@
 from pathlib import Path
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from netprop.models import PropagationResultModel
 
 def get_gsea_data(histogram_path: str, propagations_root_dir: str, diff_exp_genes_path: str, reference_propgation: str):

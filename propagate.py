@@ -10,7 +10,7 @@ import pandas as pd
 from scripts.divide_and_conquer2 import create_intersections_data, kinda_correlate_interesection_to_prop, \
     intersect_top_propagated_with_cripsr_kos, crispr_targets_in_top_intersections, randomly_split, PropResNewFormat, random_cross_proteins_splits, split_by_size
 from pathlib import Path
-from utils.utils import dump_json, load_json
+from utils.queue_managers import dump_json, load_json
 from itertools import product, chain
 from multiprocessing import Pool
 import matplotlib.pyplot as plt

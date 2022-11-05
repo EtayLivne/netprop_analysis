@@ -5,14 +5,14 @@ sys.path.append("/code")
 
 from random import sample
 from math import floor
-from utils.utils import dump_json, load_json
+from utils.queue_managers import dump_json, load_json
 from pathlib import Path
 import pandas as pd
 import numpy as np
 from ray import remote
 from ray import init as init_ray
 from multiprocessing import cpu_count
-from utils.utils import RayQueueManager, QueueWorker, MultiQueueManager
+from utils.queue_managers import RayQueueManager, QueueWorker, MultiQueueManager
 from itertools import chain, combinations
 from random import seed as rand_seed
 from math import comb

@@ -7,7 +7,7 @@ from multiprocessing import pool, Process, cpu_count
 from functools import partial
 from random_sets import randomly_replace_interactors, patch_conf_with_prot_to_interactor
 from random_sets import randomly_replace_interactors
-from utils.utils import dump_json
+from utils.queue_managers import dump_json
 from pathlib import Path
 
 

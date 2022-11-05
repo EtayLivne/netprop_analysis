@@ -1,6 +1,6 @@
 from typing import Union, Callable
 from functools import partial
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from json.decoder import JSONDecodeError
 from pathlib import Path
 

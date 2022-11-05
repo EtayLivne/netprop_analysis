@@ -1,4 +1,4 @@
-from utils.utils import load_json
+from utils.queue_managers import load_json
 
 scores = load_json(r"C:\studies\gsea_scores.json")
 

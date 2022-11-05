@@ -4,7 +4,7 @@ import numpy as np
 import json
 from random import shuffle
 from math import log
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from multiprocessing import Process, Queue
 from metrics.roc_auc import SinglePropROC
 from itertools import product

@@ -5,7 +5,7 @@ from multiprocessing import Process, Queue
 
 import pandas as pd
 
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 
 
 def _calc_num_splits(set_size: int) -> int:

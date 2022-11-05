@@ -1,5 +1,5 @@
 from pathlib import Path
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from functools import partial
 import pandas as pd
 from multiprocessing import Queue, Process

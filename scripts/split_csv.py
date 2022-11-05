@@ -1,5 +1,5 @@
 import pandas as pd
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 
 def split_csv(file_path: str, split_col: str):
     df = pd.read_csv(file_path, index_col=split_col)

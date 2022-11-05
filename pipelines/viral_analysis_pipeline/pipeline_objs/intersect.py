@@ -1,6 +1,6 @@
 from pipelines.viral_analysis_pipeline.pipeline_objs.pipeline_objs_consts import *
 from pathlib import Path
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 import pandas as pd
 from pipelines.viral_analysis_pipeline.analysis_helpers import _split_a_list, _calc_num_splits, _analyze_intersection_res_dir
 from random import shuffle

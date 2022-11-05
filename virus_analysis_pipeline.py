@@ -1,4 +1,4 @@
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from netprop.models import ConfigModel, PropagationResultModel
 from netprop.propagation.api import propagate_from_config
 import pandas as pd

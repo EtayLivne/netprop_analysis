@@ -1,7 +1,7 @@
 from cProfile import label
 from random import shuffle
 import matplotlib.pyplot as plt
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from pathlib import Path
 import numpy as np
 from crispr import get_huh_crispr

@@ -1,4 +1,4 @@
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from enum import Enum
 
 

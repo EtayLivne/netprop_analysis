@@ -1,6 +1,6 @@
 from netprop.models import PropagationResultModel
 from multiprocessing import Queue
-from utils.utils import load_json, dump_json
+from utils.queue_managers import load_json, dump_json
 from pathlib import Path
 from multiprocessing import Pool, Queue, cpu_count
 from score_from_netprop import propagation_diff_to_df
